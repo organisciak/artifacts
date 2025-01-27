@@ -8,7 +8,7 @@ export default function ToysNav() {
       <Button asChild variant="ghost" className="-ml-4">
         <Link href="/">
           <ChevronLeft className="w-4 h-4 mr-2" />
-          Back to Toys
+          Home
         </Link>
       </Button>
     </div>

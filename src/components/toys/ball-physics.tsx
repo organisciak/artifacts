@@ -1,11 +1,10 @@
 "use client";
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 class Ball {
   x: number;
@@ -48,16 +47,20 @@ class Ball {
     this.velocityX *= this.friction;
     this.velocityY *= this.friction;
 
-    if (this.x + this.radius > canvas.width) {
-      this.x = canvas.width - this.radius;
+    const dpr = window.devicePixelRatio || 1;
+    const visualWidth = canvas.width / dpr;
+    const visualHeight = canvas.height / dpr;
+
+    if (this.x + this.radius > visualWidth) {
+      this.x = visualWidth - this.radius;
       this.velocityX *= -this.restitution;
     }
     if (this.x - this.radius < 0) {
       this.x = this.radius;
       this.velocityX *= -this.restitution;
     }
-    if (this.y + this.radius > canvas.height) {
-      this.y = canvas.height - this.radius;
+    if (this.y + this.radius > visualHeight) {
+      this.y = visualHeight - this.radius;
       this.velocityY *= -this.restitution;
     }
     if (this.y - this.radius < 0) {
@@ -178,8 +181,8 @@ const BallPhysics = () => {
       const y = event.accelerationIncludingGravity.y * accelerationScale;
 
       ballsRef.current.forEach(ball => {
-        ball.gravityX = x;
-        ball.gravityY = -y;
+        ball.gravityX = -x;
+        ball.gravityY = y;
       });
     };
 
@@ -221,8 +224,45 @@ const BallPhysics = () => {
     oscillator.stop(audioContextRef.current.currentTime + 0.1);
   }, [soundEnabled]);
 
+  const updateCanvasSize = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const container = canvas.parentElement;
+    const rect = container.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    
+    // Set the canvas internal dimensions with DPR scaling
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    
+    // Set CSS size to maintain visual dimensions
+    canvas.style.width = `${rect.width}px`;
+    canvas.style.height = `${rect.height}px`;
+    
+    // Scale the context to match DPR
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.scale(dpr, dpr);
+    }
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    updateCanvasSize();
+
+    const resizeObserver = new ResizeObserver(updateCanvasSize);
+    resizeObserver.observe(canvas.parentElement);
+
+    return () => resizeObserver.disconnect();
+  }, [updateCanvasSize]);
+
   const initializeBalls = useCallback(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
+    
     const newBalls = [];
     
     for (let i = 0; i < ballCount; i++) {
@@ -310,12 +350,15 @@ const BallPhysics = () => {
   const getCanvasPoint = (e) => {
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
+    const dpr = window.devicePixelRatio || 1;
     
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    // Scale the coordinates to match the canvas's internal dimensions
     return {
-      x: (e.clientX - rect.left) * scaleX,
-      y: (e.clientY - rect.top) * scaleY
+      x: ((clientX - rect.left) / rect.width) * (canvas.width / dpr),
+      y: ((clientY - rect.top) / rect.height) * (canvas.height / dpr)
     };
   };
 
@@ -326,122 +369,162 @@ const BallPhysics = () => {
 
     const point = getCanvasPoint(e);
     
-    ballsRef.current.forEach(ball => {
+    // Check if we're clicking/touching a ball
+    let ballHit = false;
+    for (const ball of ballsRef.current) {
       if (ball.isPointInside(point.x, point.y)) {
+        ballHit = true;
         ball.isHeld = true;
         activePointerRef.current = {
           id: e.pointerId,
           ball,
-          offsetX: point.x - ball.x,
-          offsetY: point.y - ball.y
+          lastX: point.x,
+          lastY: point.y,
+          lastTime: performance.now(),
+          velocityX: 0,
+          velocityY: 0
         };
+        break;
       }
-    });
+    }
+
+    // Only prevent default if we hit a ball
+    if (ballHit) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
   };
 
   const handlePointerMove = (e) => {
-    if (activePointerRef.current && activePointerRef.current.id === e.pointerId) {
-      const point = getCanvasPoint(e);
-      const ball = activePointerRef.current.ball;
-      
-      const newX = point.x - activePointerRef.current.offsetX;
-      const newY = point.y - activePointerRef.current.offsetY;
-      
-      ball.velocityX = newX - ball.x;
-      ball.velocityY = newY - ball.y;
-      
-      ball.x = newX;
-      ball.y = newY;
+    if (!activePointerRef.current || activePointerRef.current.id !== e.pointerId) return;
+
+    e.preventDefault(); // Prevent scrolling while holding a ball
+    const point = getCanvasPoint(e);
+    const ball = activePointerRef.current.ball;
+    const now = performance.now();
+    const dt = (now - activePointerRef.current.lastTime) / 1000;
+    
+    if (dt > 0) {
+      // Calculate instantaneous velocity
+      activePointerRef.current.velocityX = (point.x - activePointerRef.current.lastX) / dt;
+      activePointerRef.current.velocityY = (point.y - activePointerRef.current.lastY) / dt;
     }
+    
+    // Update ball position
+    ball.x = point.x;
+    ball.y = point.y;
+    
+    // Update last position and time
+    activePointerRef.current.lastX = point.x;
+    activePointerRef.current.lastY = point.y;
+    activePointerRef.current.lastTime = now;
   };
 
   const handlePointerUp = (e) => {
-    if (activePointerRef.current && activePointerRef.current.id === e.pointerId) {
-      activePointerRef.current.ball.isHeld = false;
-      activePointerRef.current = null;
-    }
+    if (!activePointerRef.current || activePointerRef.current.id !== e.pointerId) return;
+
+    const ball = activePointerRef.current.ball;
+    ball.isHeld = false;
+    
+    // Apply the stored velocity to the ball with a smaller scaling factor
+    ball.velocityX = activePointerRef.current.velocityX * 0.05; // Reduced from 0.2 to 0.05
+    ball.velocityY = activePointerRef.current.velocityY * 0.05; // Reduced from 0.2 to 0.05
+    
+    activePointerRef.current = null;
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader>
-        <CardTitle>Accelerometer-based Physics</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <AlertDialog open={showPermissionDialog}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Enable Device Motion</AlertDialogTitle>
-              <AlertDialogDescription>
-                This simulation uses your device's accelerometer to control gravity.
-                Please allow access to motion sensors for the best experience.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogAction onClick={requestMotionPermission}>
-                Enable Motion Sensors
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+    <div className="w-full h-full">
+      <div className="text-sm text-gray-500 space-y-2 mt-4">
+        Options and info below
+      </div>
+      <AlertDialog open={showPermissionDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Enable Device Motion</AlertDialogTitle>
+            <AlertDialogDescription>
+              This simulation uses your device's accelerometer to control gravity.
+              Please allow access to motion sensors for the best experience, or continue without motion controls.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex gap-2">
+            <AlertDialogCancel onClick={() => setShowPermissionDialog(false)}>
+              Continue Without Motion
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={requestMotionPermission}>
+              Enable Motion Sensors
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-        <div className="relative bg-gray-100 rounded-lg overflow-hidden">
-          <canvas
-            ref={canvasRef}
-            width={600}
-            height={400}
-            className="w-full h-96 bg-slate-50 touch-none"
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerLeave={handlePointerUp}
+      <div className="relative bg-gray-100 h-[80vh]">
+        <canvas
+          ref={canvasRef}
+          className="w-full h-full bg-slate-50"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerLeave={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          style={{ touchAction: 'none' }}
+        />
+      </div>
+
+      <div className="space-y-4 mt-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Switch
+              id="sound-toggle"
+              checked={soundEnabled}
+              onCheckedChange={setSoundEnabled}
+            />
+            <Label htmlFor="sound-toggle">Sound Effects</Label>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Number of Balls</Label>
+          <Slider 
+            value={[ballCount]}
+            onValueChange={([value]) => setBallCount(value)}
+            min={1}
+            max={50}
+            step={1}
           />
         </div>
 
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Switch
-                id="sound-toggle"
-                checked={soundEnabled}
-                onCheckedChange={setSoundEnabled}
-              />
-              <Label htmlFor="sound-toggle">Sound Effects</Label>
-            </div>
-          </div>
+        <Button onClick={initializeBalls}>
+          Reset Simulation
+        </Button>
+      </div>
 
-          <div className="space-y-2">
-            <Label>Number of Balls</Label>
-            <Slider 
-              value={[ballCount]}
-              onValueChange={([value]) => setBallCount(value)}
-              min={1}
-              max={50}
-              step={1}
-            />
-          </div>
-
-          <Button onClick={initializeBalls}>
-            Reset Simulation
-          </Button>
-        </div>
-
-        <div className="text-sm text-gray-500 space-y-2">
-          <p>
-            Tilt your device to control gravity! The balls will respond to your device's orientation.
+      <div className="text-sm text-gray-500 space-y-2 mt-4">
+        <p>
+          Tilt your device to control gravity! The balls will respond to your device's orientation.
+        </p>
+        <p>
+          Click and drag to interact with the balls. Collisions produce sounds based on impact velocity.
+        </p>
+        {!motionPermission && (
+          <p className="text-amber-500">
+            Motion sensors are not enabled. The simulation will work better with accelerometer access.
+            You can reload the page to enable motion sensors.
           </p>
-          <p>
-            Click and drag to interact with the balls. Collisions produce sounds based on impact velocity.
-          </p>
-          {!motionPermission && (
-            <p className="text-amber-500">
-              Motion sensors are not enabled. The simulation will work better with accelerometer access.
-              You can reload the page to enable motion sensors.
-            </p>
-          )}
+        )}
+        <div className="border-t border-gray-200 pt-2 mt-4">
+          <p className="font-medium">Developer Details</p>
+          <ul className="list-disc list-inside">
+            <li>Uses HTML5 Canvas for rendering</li>
+            <li>Implements elastic collision physics (part of Canvas API)</li>
+            <li>Supports device motion API for gravity control</li>
+            <li>Uses Touch Events for touch-based interactions</li>
+            <li>Uses Web Audio API for collision sounds</li>
+            <li>Handles high-DPI displays with proper scaling (proper? well, who knows)</li>
+          </ul>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

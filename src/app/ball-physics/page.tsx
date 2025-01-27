@@ -4,7 +4,7 @@ import { Footer } from '@/components/ui/footer';
 
 export default function TouchSynthPage() {
   return (
-    <main className="container mx-auto p-4 space-y-8">
+    <main className="container mx-auto px-4 py-2 space-y-2">
       <ToysNav />
       <BallPhysics />
       <Footer />
