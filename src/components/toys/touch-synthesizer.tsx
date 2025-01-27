@@ -51,9 +51,10 @@ const TouchSynthesizer = () => {
       const now = Date.now();
       const stuckTouchIds = [];
 
-      lastMovementRef.current.forEach((data, touchId) => {
-        // If a touch point hasn't moved in 2 seconds, consider it stuck
-        if (now - data.timestamp > 2000) {
+      // Check for any nodes that exist but aren't in activePoints
+      nodesRef.current.forEach((node, touchId) => {
+        if (!lastMovementRef.current.has(touchId) || 
+            now - lastMovementRef.current.get(touchId).timestamp > 2000) {
           stuckTouchIds.push(touchId);
         }
       });
@@ -72,10 +73,12 @@ const TouchSynthesizer = () => {
       }
     };
 
-    // Check for stuck notes every second
-    const stuckNoteInterval = setInterval(checkStuckNotes, 1000);
+    // Check for stuck notes more frequently
+    const stuckNoteInterval = setInterval(checkStuckNotes, 500);
 
     return () => {
+      // Clean up all active sounds when component unmounts
+      nodesRef.current.forEach((_, id) => removeSound(id));
       ctx.close();
       clearInterval(stuckNoteInterval);
     };
@@ -253,14 +256,29 @@ const TouchSynthesizer = () => {
     if (!nodesRef.current.has(id)) return;
     
     const nodes = nodesRef.current.get(id);
-    nodes.gain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.1);
+    const currentTime = audioContext.currentTime;
     
-    setTimeout(() => {
-      nodes.osc.stop();
-      nodes.osc.disconnect();
+    try {
+      nodes.gain.gain.cancelScheduledValues(currentTime);
+      nodes.gain.gain.setValueAtTime(nodes.gain.gain.value, currentTime);
+      nodes.gain.gain.linearRampToValueAtTime(0, currentTime + 0.1);
+      
+      setTimeout(() => {
+        try {
+          nodes.osc.stop();
+          nodes.osc.disconnect();
+          nodes.filter.disconnect();
+          nodes.gain.disconnect();
+          nodes.analyzer.disconnect();
+        } catch (e) {
+          console.warn('Error cleaning up audio nodes:', e);
+        }
+        nodesRef.current.delete(id);
+      }, 200);
+    } catch (e) {
+      console.warn('Error ramping down gain:', e);
       nodesRef.current.delete(id);
-      lastMovementRef.current.delete(id);
-    }, 100);
+    }
   };
 
   // Update existing handlers and add mouse handlers

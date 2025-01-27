@@ -34,6 +34,21 @@ export default function Home() {
         ))}
       </div>
 
+      <div className="space-y-4">
+        <h2 className="text-2xl font-semibold">Details</h2>
+        <p className="text-lg text-muted-foreground">
+          The source code is available on{' '}
+          <a 
+            href="https://github.com/organisciak/artifacts" 
+            className="underline hover:text-primary"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            GitHub
+          </a>.
+        </p>
+      </div>
+
       <Footer />
     </main>
   );
