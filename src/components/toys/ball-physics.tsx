@@ -8,7 +8,20 @@ import { Switch } from '@/components/ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 class Ball {
-  constructor(x, y, radius, color) {
+  x: number;
+  y: number;
+  radius: number;
+  color: string;
+  velocityX: number;
+  velocityY: number;
+  gravityX: number;
+  gravityY: number;
+  friction: number;
+  restitution: number;
+  isHeld: boolean;
+  lastCollisionTime: number;
+
+  constructor(x: number, y: number, radius: number, color: string) {
     this.x = x;
     this.y = y;
     this.radius = radius;
@@ -56,14 +69,14 @@ class Ball {
   draw(ctx, scaledX, scaledY, scaledRadius) {
     // Main circle
     ctx.beginPath();
-    ctx.arc(scaledX, scaledY, scaledRadius, 0, Math.PI * 2);
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
     ctx.strokeStyle = this.color;
     ctx.lineWidth = 2;
     ctx.stroke();
     
     // Inner concentric circle
     ctx.beginPath();
-    ctx.arc(scaledX, scaledY, scaledRadius * 0.6, 0, Math.PI * 2);
+    ctx.arc(this.x, this.y, this.radius * 0.6, 0, Math.PI * 2);
     ctx.strokeStyle = `${this.color}80`; // Semi-transparent
     ctx.stroke();
     
@@ -71,16 +84,16 @@ class Ball {
     const speed = Math.sqrt(this.velocityX * this.velocityX + this.velocityY * this.velocityY);
     if (speed > 0.5 && !this.isHeld) {
       const angle = Math.atan2(this.velocityY, this.velocityX);
-      const lineLength = Math.min(speed * 3, scaledRadius);
+      const lineLength = Math.min(speed * 3, this.radius);
       
       // Draw 3 motion lines
       for (let i = -1; i <= 1; i++) {
         ctx.beginPath();
         const offsetAngle = angle + (i * Math.PI / 8);
-        const startX = scaledX - Math.cos(offsetAngle) * (scaledRadius + lineLength);
-        const startY = scaledY - Math.sin(offsetAngle) * (scaledRadius + lineLength);
-        const endX = scaledX - Math.cos(offsetAngle) * scaledRadius;
-        const endY = scaledY - Math.sin(offsetAngle) * scaledRadius;
+        const startX = this.x - Math.cos(offsetAngle) * (this.radius + lineLength);
+        const startY = this.y - Math.sin(offsetAngle) * (this.radius + lineLength);
+        const endX = this.x - Math.cos(offsetAngle) * this.radius;
+        const endY = this.y - Math.sin(offsetAngle) * this.radius;
         
         ctx.moveTo(startX, startY);
         ctx.lineTo(endX, endY);
@@ -92,12 +105,12 @@ class Ball {
     
     // Optional crosshair when held
     if (this.isHeld) {
-      const crossSize = scaledRadius * 1.5;
+      const crossSize = this.radius * 1.5;
       ctx.beginPath();
-      ctx.moveTo(scaledX - crossSize, scaledY);
-      ctx.lineTo(scaledX + crossSize, scaledY);
-      ctx.moveTo(scaledX, scaledY - crossSize);
-      ctx.lineTo(scaledX, scaledY + crossSize);
+      ctx.moveTo(this.x - crossSize, this.y);
+      ctx.lineTo(this.x + crossSize, this.y);
+      ctx.moveTo(this.x, this.y - crossSize);
+      ctx.lineTo(this.x, this.y + crossSize);
       ctx.strokeStyle = `${this.color}40`;
       ctx.lineWidth = 1;
       ctx.stroke();
@@ -117,7 +130,7 @@ const BallPhysics = () => {
   const ballsRef = useRef([]);
   const requestRef = useRef(null);
   const activePointerRef = useRef(null);
-  const audioContextRef = useRef(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
   const [ballCount, setBallCount] = useState(15);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showPermissionDialog, setShowPermissionDialog] = useState(true);
@@ -132,7 +145,7 @@ const BallPhysics = () => {
   ];
 
   useEffect(() => {
-    audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     return () => {
       if (audioContextRef.current) {
         audioContextRef.current.close();
@@ -142,8 +155,8 @@ const BallPhysics = () => {
 
   const requestMotionPermission = async () => {
     try {
-      if (typeof DeviceMotionEvent.requestPermission === 'function') {
-        const permission = await DeviceMotionEvent.requestPermission();
+      if (typeof (DeviceMotionEvent as any).requestPermission === 'function') {
+        const permission = await (DeviceMotionEvent as any).requestPermission();
         setMotionPermission(permission === 'granted');
       } else {
         setMotionPermission(true);
@@ -229,50 +242,38 @@ const BallPhysics = () => {
 
   useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
-
-    // Add scale transform to maintain aspect ratio
-    ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    ctx.scale(1/scaleX, 1/scaleY); // Apply inverse scale to maintain circle shape
+    if (!ctx) return;
 
     const animate = () => {
-      ctx.clearRect(0, 0, canvas.width * scaleX, canvas.height * scaleY);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       ballsRef.current.forEach(ball => {
         ball.update(canvas);
-        // Scale the drawing coordinates
-        const scaledX = ball.x * scaleX;
-        const scaledY = ball.y * scaleY;
-        const scaledRadius = ball.radius * Math.min(scaleX, scaleY);
-        
-        // Draw with scaled coordinates
-        ball.draw(ctx, scaledX, scaledY, scaledRadius);
+        ball.draw(ctx);
       });
 
       for (let i = 0; i < ballsRef.current.length; i++) {
         for (let j = i + 1; j < ballsRef.current.length; j++) {
           const ball1 = ballsRef.current[i];
           const ball2 = ballsRef.current[j];
-
-          const dx = ball2.x - ball1.x;
-          const dy = ball2.y - ball1.y;
+          const dx = (ball2 as Ball).x - (ball1 as Ball).x;
+          const dy = (ball2 as Ball).y - (ball1 as Ball).y;
           const distance = Math.sqrt(dx * dx + dy * dy);
 
-          if (distance < ball1.radius + ball2.radius) {
+          if (distance < (ball1 as Ball).radius + (ball2 as Ball).radius) {
             const angle = Math.atan2(dy, dx);
             const sin = Math.sin(angle);
             const cos = Math.cos(angle);
 
-            const vx1 = ball1.velocityX * cos + ball1.velocityY * sin;
-            const vy1 = ball1.velocityY * cos - ball1.velocityX * sin;
-            const vx2 = ball2.velocityX * cos + ball2.velocityY * sin;
-            const vy2 = ball2.velocityY * cos - ball2.velocityX * sin;
+            const vx1 = (ball1 as Ball).velocityX * cos + (ball1 as Ball).velocityY * sin;
+            const vy1 = (ball1 as Ball).velocityY * cos - (ball1 as Ball).velocityX * sin;
+            const vx2 = (ball2 as Ball).velocityX * cos + (ball2 as Ball).velocityY * sin;
+            const vy2 = (ball2 as Ball).velocityY * cos - (ball2 as Ball).velocityX * sin;
 
             const relativeVelocity = Math.sqrt(
-              Math.pow(ball1.velocityX - ball2.velocityX, 2) +
+              Math.pow((ball1 as Ball).velocityX - (ball2 as Ball).velocityX, 2) +
               Math.pow(ball1.velocityY - ball2.velocityY, 2)
             );
 

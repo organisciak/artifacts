@@ -1,4 +1,4 @@
-import { toys } from '@/lib/toys';
+import { Toy, toys } from '@/lib/toys';
 import { ToyCard } from '@/components/ui/toy-card';
 import { Footer } from '@/components/ui/footer';
 
