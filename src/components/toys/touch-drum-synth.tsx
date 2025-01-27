@@ -119,7 +119,7 @@ const TouchDrumSynth = () => {
   const velocityDecayRef = useRef(new Map());
   
   useEffect(() => {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
     setAudioContext(ctx);
     return () => ctx.close();
   }, []);
