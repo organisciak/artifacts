@@ -6,7 +6,7 @@ const PADS = [
     name: 'Kick', 
     color: 'bg-red-500', 
     textColor: 'text-red-100', 
-    key: 'z', 
+    key: 'q', 
     synth: 'kick',
     xLabel: 'Pitch',
     yLabel: 'Decay'
@@ -15,7 +15,7 @@ const PADS = [
     name: 'Snare', 
     color: 'bg-blue-500', 
     textColor: 'text-blue-100', 
-    key: 'x', 
+    key: 'w', 
     synth: 'snare',
     xLabel: 'Tone',
     yLabel: 'Noise'
@@ -24,7 +24,7 @@ const PADS = [
     name: 'HiHat', 
     color: 'bg-yellow-500', 
     textColor: 'text-yellow-100', 
-    key: 'c', 
+    key: 'e', 
     synth: 'hihat',
     xLabel: 'Freq',
     yLabel: 'Decay'
@@ -33,7 +33,7 @@ const PADS = [
     name: 'Clap', 
     color: 'bg-green-500', 
     textColor: 'text-green-100', 
-    key: 'v', 
+    key: 'r', 
     synth: 'clap',
     xLabel: 'Spread',
     yLabel: 'Tone'
@@ -78,7 +78,7 @@ const PADS = [
     name: 'Cowbell', 
     color: 'bg-indigo-500', 
     textColor: 'text-indigo-100', 
-    key: 'q', 
+    key: 'z', 
     synth: 'cowbell',
     xLabel: 'Tone',
     yLabel: 'Ring'
@@ -87,7 +87,7 @@ const PADS = [
     name: 'Shaker', 
     color: 'bg-lime-500', 
     textColor: 'text-lime-100', 
-    key: 'w', 
+    key: 'x', 
     synth: 'shaker',
     xLabel: 'Rate',
     yLabel: 'Tone'
@@ -96,7 +96,7 @@ const PADS = [
     name: 'Tom 3', 
     color: 'bg-rose-500', 
     textColor: 'text-rose-100', 
-    key: 'e', 
+    key: 'c', 
     synth: 'tom3',
     xLabel: 'Pitch',
     yLabel: 'Tone'
@@ -105,7 +105,7 @@ const PADS = [
     name: 'Perc', 
     color: 'bg-cyan-500', 
     textColor: 'text-cyan-100', 
-    key: 'r', 
+    key: 'v', 
     synth: 'perc',
     xLabel: 'Pitch',
     yLabel: 'Decay'
