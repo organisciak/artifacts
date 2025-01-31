@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { Toy } from '@/lib/toys';
-import { Music, Drum, Activity, Volleyball, Pointer } from 'lucide-react';
+import { Music, Drum, Activity, Volleyball, Pointer, Flower } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const IconMap = {
@@ -12,6 +12,7 @@ const IconMap = {
   Activity,
   Volleyball,
   Pointer,
+  Flower,
 } as const;
 
 export function ToyCard({ toy, className }: { toy: Toy; className?: string }) {
@@ -20,12 +21,18 @@ export function ToyCard({ toy, className }: { toy: Toy; className?: string }) {
   return (
     <Link href={toy.path}>
       <Card className={cn(
-        "h-full transition-all hover:shadow-lg hover:-translate-y-1",
+        "h-full transition-all hover:shadow-lg hover:-translate-y-1 relative overflow-hidden",
         className === 'compact' && "p-2",
         className
       )}>
+        {toy.backgroundImage && (
+          <div 
+            className="absolute inset-0 opacity-30 bg-cover bg-center"
+            style={{ backgroundImage: `url(${toy.backgroundImage})` }}
+          />
+        )}
         <CardHeader className={cn(
-          "flex flex-col gap-1",
+          "flex flex-col gap-1 relative",
           className === 'compact' && "p-2 space-y-0"
         )}>
           <div className="flex items-center gap-2">

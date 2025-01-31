@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { AlertBadge } from '../ui/alert-badge';
 
 const WAVEFORMS = ['sine', 'square', 'sawtooth', 'triangle'];
 const COLORS = {
@@ -19,7 +20,7 @@ const BG_COLORS = {
   'triangle': 'bg-emerald-500'
 };
 
-const MODES = ['Waveform', 'Spectrum', 'Lissajous'];
+const MODES = ['Waveform', 'Spectrum', 'Lissajous', 'Circular'];
 
 const TouchSynthesizer = () => {
   const [audioContext, setAudioContext] = useState(null);
@@ -100,6 +101,8 @@ const TouchSynthesizer = () => {
         drawSpectrum(ctx, canvas);
       } else if (visualizationMode === 'Lissajous') {
         drawLissajous(ctx, canvas);
+      } else if (visualizationMode === 'Circular') {
+        drawCircular(ctx, canvas);
       }
 
       animationFrameRef.current = requestAnimationFrame(draw);
@@ -196,6 +199,42 @@ const TouchSynthesizer = () => {
     });
   };
 
+  const drawCircular = (ctx, canvas) => {
+    const activeNodes = Array.from(nodesRef.current.entries());
+    if (activeNodes.length === 0) return;
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = Math.min(canvas.width, canvas.height) / 3;
+
+    activeNodes.forEach(([id, nodes]) => {
+      const dataArray = new Float32Array(nodes.analyzer.frequencyBinCount);
+      nodes.analyzer.getFloatTimeDomainData(dataArray);
+      
+      ctx.beginPath();
+      ctx.strokeStyle = COLORS[nodes.waveform];
+      ctx.lineWidth = 2;
+      
+      for (let i = 0; i < dataArray.length; i++) {
+        const angle = (i / dataArray.length) * Math.PI * 2;
+        const amplitude = dataArray[i] * radius / 2;
+        const r = radius + amplitude;
+        
+        const x = centerX + r * Math.cos(angle);
+        const y = centerY + r * Math.sin(angle);
+        
+        if (i === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      }
+      
+      ctx.closePath();
+      ctx.stroke();
+    });
+  };
+
   const getNextWaveform = () => {
     const waveform = WAVEFORMS[waveformCountRef.current % WAVEFORMS.length];
     waveformCountRef.current += 1;
@@ -253,7 +292,7 @@ const TouchSynthesizer = () => {
   };
 
   const removeSound = (id) => {
-    if (!nodesRef.current.has(id)) return;
+    if (!audioContext || !nodesRef.current.has(id)) return;
     
     const nodes = nodesRef.current.get(id);
     const currentTime = audioContext.currentTime;
@@ -277,6 +316,16 @@ const TouchSynthesizer = () => {
       }, 200);
     } catch (e) {
       console.warn('Error ramping down gain:', e);
+      // Clean up nodes even if ramping fails
+      try {
+        nodes.osc.stop();
+        nodes.osc.disconnect();
+        nodes.filter.disconnect();
+        nodes.gain.disconnect();
+        nodes.analyzer.disconnect();
+      } catch (innerError) {
+        console.warn('Error in cleanup after gain error:', innerError);
+      }
       nodesRef.current.delete(id);
     }
   };
@@ -417,7 +466,7 @@ const TouchSynthesizer = () => {
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
         <CardTitle>Multi-Digital Theremin</CardTitle>
-        <div className="text-sm text-gray-500 mt-1">Try playing with multiple fingers. A demonstration of the Web Audio API.</div>
+        <div className="text-sm text-gray-500 mt-1">Try playing with multiple fingers. A demonstration of the Web Audio API. <AlertBadge message="If the audio hangs, just refresh!" /></div>
       </CardHeader>
       <CardContent className="space-y-4">
         
@@ -460,7 +509,7 @@ const TouchSynthesizer = () => {
             ref={canvasRef}
             width={800}
             height={200}
-            className="w-full h-20 bg-gray-50 rounded-lg"
+            className="w-full h-48 bg-gray-50 rounded-lg"
           />
           <div className="absolute top-2 left-2 text-xs text-gray-500">
             {visualizationMode} Visualization
