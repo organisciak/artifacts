@@ -6,7 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Fish } from '@/game/entities/Fish';
 // import { ScoreBoard } from './fish/ScoreBoard';
-//import { GameHUD } from './fish/GameHUD';
+import { GameHUD } from './fish/GameHUD';
 import { GameManager } from '@/game/GameManager';
 
 const FishGame = () => {
