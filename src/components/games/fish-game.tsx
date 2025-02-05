@@ -22,6 +22,7 @@ const FishGame = () => {
   const [debugMotion, setDebugMotion] = useState({ x: 0, y: 0 });
   const [useAccelerometer, setUseAccelerometer] = useState(false);
   const [accelerometerAvailable, setAccelerometerAvailable] = useState(false);
+  const [isPaused, setIsPaused] = useState(true);
 
   const colors = [
     '#E63946', // Vermillion red
@@ -98,6 +99,11 @@ const FishGame = () => {
     
     // Create new GameManager instance
     gameManagerRef.current = new GameManager(canvasRef.current);
+    // Ensure the game starts paused if not in fullscreen
+    if (!document.fullscreenElement) {
+      gameManagerRef.current.pause();
+      setIsPaused(true);
+    }
   }, []);
 
   useEffect(() => {
@@ -293,7 +299,8 @@ const FishGame = () => {
     };
   };
 
-  // Replace the permission button with a toggle
+  // Remove the standalone full screen toggle from the UI.
+  // The controlToggle remains for motion control.
   const controlToggle = (
     <button
       onClick={() => {
@@ -317,6 +324,23 @@ const FishGame = () => {
     </button>
   );
 
+  // Listen for full-screen changes. If the game leaves full screen, then pause the game.
+  useEffect(() => {
+    const handleFullScreenChange = () => {
+      if (!document.fullscreenElement) {
+        if (gameManagerRef.current) {
+          gameManagerRef.current.pause();
+        }
+        setIsPaused(true);
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullScreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullScreenChange);
+    };
+  }, []);
+
   return (
     <div className="w-full h-full">
       <div className="relative bg-gray-100 h-[80vh]">
@@ -334,6 +358,14 @@ const FishGame = () => {
           <br />
           Permission: {motionPermission ? 'Granted' : 'Not Granted'}
         </div>
+        {/* Paused overlay */}
+        {isPaused && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="bg-black bg-opacity-50 p-4 rounded">
+              <h1 className="text-white text-3xl font-bold">Paused</h1>
+            </div>
+          </div>
+        )}
         {/* Scoreboard not yet implemented <ScoreBoard score={0} level={1} /> */}
       </div>
 
@@ -347,12 +379,44 @@ const FishGame = () => {
             />
             <Label htmlFor="sound-toggle">Sound Effects</Label>
           </div>
-          {controlToggle}
+          <div className="flex items-center gap-2">
+            {controlToggle}
+          </div>
         </div>
 
-        <Button onClick={initializeGame}>
-          Reset Game
-        </Button>
+        <div className="flex gap-4">
+          <Button onClick={initializeGame}>
+            Reset Game
+          </Button>
+          <Button
+            onClick={() => {
+              // If not in full-screen mode, request fullscreen first.
+              if (!document.fullscreenElement) {
+                const container = canvasRef.current?.parentElement;
+                if (container) {
+                  container.requestFullscreen().then(() => {
+                    if (gameManagerRef.current) {
+                      gameManagerRef.current.resume();
+                      setIsPaused(false);
+                    }
+                  }).catch(err => console.error("Error entering fullscreen", err));
+                }
+              } else {
+                if (gameManagerRef.current) {
+                  if (isPaused) {
+                    gameManagerRef.current.resume();
+                    setIsPaused(false);
+                  } else {
+                    gameManagerRef.current.pause();
+                    setIsPaused(true);
+                  }
+                }
+              }
+            }}
+          >
+            {isPaused ? 'Play' : 'Pause Game'}
+          </Button>
+        </div>
       </div>
 
       <GameHUD />

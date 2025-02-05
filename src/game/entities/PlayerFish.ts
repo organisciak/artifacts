@@ -22,6 +22,8 @@ export class PlayerFish extends Fish {
   targetX: number | null = null;
   targetY: number | null = null;
   accelerationScale = 0.0002;
+  invincibilityEndTime: number = 0;
+  readonly INVINCIBILITY_DURATION = 2000; // 2 seconds of invincibility
 
   constructor(x: number, y: number, radius: number, color: string) {
     super(x, y, radius, color);
@@ -80,11 +82,26 @@ export class PlayerFish extends Fish {
     this.velocityY *= this.friction;
   }
 
+  isInvincible(): boolean {
+    return performance.now() < this.invincibilityEndTime;
+  }
+
+  makeInvincible() {
+    this.invincibilityEndTime = performance.now() + this.INVINCIBILITY_DURATION;
+  }
+
   // Override draw method to make player fish visually distinct
   draw(ctx: CanvasRenderingContext2D) {
     // Save context state
     ctx.save();
     
+    // Add flashing effect during invincibility
+    if (this.isInvincible()) {
+      const flashRate = 200; // Flash every 200ms
+      const shouldShow = Math.floor(performance.now() / flashRate) % 2 === 0;
+      ctx.globalAlpha = shouldShow ? 1 : 0.3;
+    }
+
     // Rotate context based on movement direction
     const angle = Math.atan2(this.velocityY, this.velocityX);
     ctx.translate(this.x, this.y);

@@ -56,6 +56,7 @@ export class GameManager {
   private score: number = 0;
   private level: number = 1;
   private lastSpawnTime: number = 0;
+  private paused: boolean = false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -232,8 +233,31 @@ export class GameManager {
     return Math.max(this.config.minSpawnInterval, interval);
   }
 
+  // =================== PAUSE FEATURE ===================
+  pause() {
+    this.paused = true;
+  }
+
+  resume() {
+    this.paused = false;
+    // Reset spawn timer so the game doesn't immediately spawn fish upon resume
+    this.lastSpawnTime = performance.now();
+  }
+
+  togglePause() {
+    if (this.paused) {
+      this.resume();
+    } else {
+      this.pause();
+    }
+  }
+  // ======================================================
+
   // Updated update method implementing eating mechanics
   update() {
+    // If the game is paused, skip updating
+    if (this.paused) return;
+
     const now = performance.now();
 
     // Check if it's time to spawn a new fish using dynamic interval
@@ -302,16 +326,19 @@ export class GameManager {
           // Player eats enemy
           if (this.playerFish.radius > enemy.radius * 1.1) {
             // Increase player size by a fraction of the enemy's size
-            this.playerFish.radius += enemy.radius * 0.1;
+            this.playerFish.radius += enemy.radius * 0.05;
             // Update score
             this.score += Math.floor(enemy.radius * 10);
             // Remove the enemy fish
             this.enemyFish.splice(i, 1);
           }
-          // If the enemy is significantly larger, it eats a chunk out of the player
-          else if (enemy.radius > this.playerFish.radius * 1.1) {
-            const reduction = this.playerFish.radius * 0.3;
+          // If the enemy is significantly larger and player isn't invincible
+          else if (enemy.radius > this.playerFish.radius * 1.1 && !this.playerFish.isInvincible()) {
+            const reduction = (enemy.radius - this.playerFish.radius) * 0.8;
             this.playerFish.radius -= reduction;
+            // Make player invincible after taking damage
+            this.playerFish.makeInvincible();
+            
             if (this.playerFish.radius < this.config.baseRadius) {
               console.log("Game Over! You were eaten!");
               this.reset();
