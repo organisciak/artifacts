@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Web Toys",
-  description: "A collection of web toys from porg.dev",
+  title: "Trinkets",
+  description: "A collection of web trinkets from porg.dev",
 };
 
 export default function RootLayout({
