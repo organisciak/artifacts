@@ -23,6 +23,7 @@ const FishGame = () => {
   const [useAccelerometer, setUseAccelerometer] = useState(false);
   const [accelerometerAvailable, setAccelerometerAvailable] = useState(false);
   const [isPaused, setIsPaused] = useState(true);
+  const [showDebug, setShowDebug] = useState(false);
 
   const colors = [
     '#E63946', // Vermillion red
@@ -353,17 +354,39 @@ const FishGame = () => {
           }}
         />
         {/* Debug overlay */}
-        <div className="absolute top-0 left-0 bg-black/50 text-white p-2 text-sm">
-          Motion: {debugMotion.x.toFixed(2)}, {debugMotion.y.toFixed(2)}
-          <br />
-          Permission: {motionPermission ? 'Granted' : 'Not Granted'}
-        </div>
+        {showDebug && (
+          <div className="absolute top-0 left-0 bg-black/50 text-white p-2 text-sm">
+            Motion: {debugMotion.x.toFixed(2)}, {debugMotion.y.toFixed(2)}
+            <br />
+            Permission: {motionPermission ? 'Granted' : 'Not Granted'}
+          </div>
+        )}
         {/* Paused overlay */}
         {isPaused && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-black bg-opacity-50 p-4 rounded">
-              <h1 className="text-white text-3xl font-bold">Paused</h1>
-            </div>
+          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+            <Button 
+              className="text-2xl px-8 py-6 bg-blue-500 hover:bg-blue-600 transition-colors"
+              onClick={() => {
+                if (!document.fullscreenElement) {
+                  const container = canvasRef.current?.parentElement;
+                  if (container) {
+                    container.requestFullscreen().then(() => {
+                      if (gameManagerRef.current) {
+                        gameManagerRef.current.resume();
+                        setIsPaused(false);
+                      }
+                    }).catch(err => console.error("Error entering fullscreen", err));
+                  }
+                } else {
+                  if (gameManagerRef.current) {
+                    gameManagerRef.current.resume();
+                    setIsPaused(true);
+                  }
+                }
+              }}
+            >
+              Play Game
+            </Button>
           </div>
         )}
         {/* Scoreboard not yet implemented <ScoreBoard score={0} level={1} /> */}

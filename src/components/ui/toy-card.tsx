@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { Toy } from '@/lib/toys';
-import { Music, Drum, Activity, Volleyball, Pointer, Flower } from 'lucide-react';
+import { Music, Drum, Activity, Volleyball, Pointer, Flower, Fish } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const IconMap = {
@@ -13,6 +13,7 @@ const IconMap = {
   Volleyball,
   Pointer,
   Flower,
+  Fish,
 } as const;
 
 export function ToyCard({ toy, className }: { toy: Toy; className?: string }) {

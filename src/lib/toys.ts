@@ -50,6 +50,15 @@ export const toys: Toy[] = [
     tags: ['SVG', 'Animation', 'Interactive'],
     backgroundImage: '/images/fractals1.png'
   },
+  {
+    id: 'fish-game',
+    name: 'Fish Game',
+    description: 'A relaxing fish swimming simulation (in-progress)',
+    iconName: 'Fish',
+    path: '/games/fish',
+    category: 'Games',
+    tags: ['Canvas', 'Animation', 'Interactive'],
+  },
   /*{
     id: 'pointer-lock',
     name: 'Pointer Lock',
