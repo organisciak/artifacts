@@ -48,16 +48,26 @@ export const toys: Toy[] = [
     path: '/geom/easy-fractals',
     category: 'Geometric',
     tags: ['SVG', 'Animation', 'Interactive'],
-    backgroundImage: '/images/fractals1.png'
+    backgroundImage: '/bg-videos/mfractals.mp4'
   },
   {
     id: 'fish-game',
     name: 'Fish Game',
-    description: 'A relaxing fish swimming simulation (in-progress)',
+    description: 'A big fish/little fish game using the angle of your phone to navigate (in-progress)',
     iconName: 'Fish',
     path: '/games/fish',
     category: 'Games',
-    tags: ['Canvas', 'Animation', 'Interactive'],
+    tags: ['Canvas', 'Animation', 'Interactive', 'Accelerometer'],
+  },
+  {
+    id: 'bauhaus-pattern',
+    name: 'Bauhaus Pattern Generator',
+    description: 'Interactive generative shape theory.',
+    iconName: 'Square',
+    path: '/geom/bauhaus',
+    category: 'Geometric',
+    tags: ['SVG', 'Animation', 'Interactive', 'Generative Art'],
+    backgroundImage: '/bg-videos/bauhaus.mp4',
   },
   /*{
     id: 'pointer-lock',

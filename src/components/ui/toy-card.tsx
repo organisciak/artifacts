@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { Toy } from '@/lib/toys';
-import { Music, Drum, Activity, Volleyball, Pointer, Flower, Fish } from 'lucide-react';
+import { Music, Drum, Activity, Volleyball, Pointer, Flower, Fish, Square } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const IconMap = {
   Music,
   Drum,
+  Square,
   Activity,
   Volleyball,
   Pointer,
@@ -27,10 +28,22 @@ export function ToyCard({ toy, className }: { toy: Toy; className?: string }) {
         className
       )}>
         {toy.backgroundImage && (
-          <div 
-            className="absolute inset-0 opacity-30 bg-cover bg-center"
-            style={{ backgroundImage: `url(${toy.backgroundImage})` }}
-          />
+          toy.backgroundImage.endsWith('.mp4') ? (
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover opacity-30"
+            >
+              <source src={toy.backgroundImage} type="video/mp4" />
+            </video>
+          ) : (
+            <div 
+              className="absolute inset-0 opacity-30 bg-cover bg-center"
+              style={{ backgroundImage: `url(${toy.backgroundImage})` }}
+            />
+          )
         )}
         <CardHeader className={cn(
           "flex flex-col gap-1 relative",
