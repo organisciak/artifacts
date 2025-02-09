@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Trinkets",
+  title: "Trinkets | porg.dev",
   description: "A collection of web trinkets from porg.dev",
 };
 
