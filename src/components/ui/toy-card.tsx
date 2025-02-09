@@ -3,18 +3,14 @@
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { Toy } from '@/lib/toys';
-import { Music, Drum, Activity, Volleyball, Pointer, Flower, Fish, Square } from 'lucide-react';
+import { Music, Drum, Waves, Activity, Volleyball, 
+  Pointer, Flower, Fish, Pyramid } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const IconMap = {
-  Music,
-  Drum,
-  Square,
-  Activity,
-  Volleyball,
-  Pointer,
-  Flower,
-  Fish,
+  Music, Drum, Waves,
+  Pyramid, Activity, Volleyball,
+  Pointer, Flower, Fish,
 } as const;
 
 export function ToyCard({ toy, className }: { toy: Toy; className?: string }) {
