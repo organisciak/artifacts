@@ -79,6 +79,16 @@ export const toys: Toy[] = [
     tags: ['SVG', 'Animation', 'Interactive', 'Generative Art'],
     backgroundImage: '/bg-videos/fabric.mp4',
   },
+  {
+    id: 'icon-generator',
+    name: 'Icon Generator',
+    description: 'Generate consistent emoji icons from text for prototyping and placeholders',
+    iconName: 'Image',
+    path: '/icon',
+    category: 'Utilities',
+    tags: ['SVG', 'Generative Art', 'API'],
+    backgroundImage: '/icon/icon-generator',
+  },
   /*{
     id: 'pointer-lock',
     name: 'Pointer Lock',

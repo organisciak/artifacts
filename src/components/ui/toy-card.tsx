@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { Toy } from '@/lib/toys';
 import { Music, Drum, Waves, Activity, Volleyball, 
+  Image,
   Pointer, Flower, Fish, Pyramid } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -11,6 +12,7 @@ const IconMap = {
   Music, Drum, Waves,
   Pyramid, Activity, Volleyball,
   Pointer, Flower, Fish,
+  Image,
 } as const;
 
 export function ToyCard({ toy, className }: { toy: Toy; className?: string }) {
@@ -23,7 +25,7 @@ export function ToyCard({ toy, className }: { toy: Toy; className?: string }) {
         className === 'compact' && "p-2",
         className
       )}>
-        {toy.backgroundImage && (
+        {toy.backgroundImage ? (
           toy.backgroundImage.endsWith('.mp4') ? (
             <video
               autoPlay
@@ -40,6 +42,11 @@ export function ToyCard({ toy, className }: { toy: Toy; className?: string }) {
               style={{ backgroundImage: `url(${toy.backgroundImage})` }}
             />
           )
+        ) : (
+          <div 
+            className="absolute inset-0 opacity-30 bg-cover bg-center"
+            style={{ backgroundImage: `url(/icon/${encodeURIComponent(toy.name)})` }}
+          />
         )}
         <CardHeader className={cn(
           "flex flex-col gap-1 relative",
