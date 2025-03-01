@@ -8,16 +8,19 @@ export default function IconDemo() {
   const [key, setKey] = useState('');
   const [iconUrl, setIconUrl] = useState('/icon/default');
   const [copied, setCopied] = useState(false);
+  const [origin, setOrigin] = useState('');
 
   useEffect(() => {
+    // Set the origin when component mounts (client-side only)
+    setOrigin(window.location.origin);
+    
     // Update the icon URL when the key changes
     const newUrl = key.trim() ? `/icon/${encodeURIComponent(key)}` : '/icon/default';
     setIconUrl(newUrl);
   }, [key]);
 
   const copyImgTag = () => {
-    const baseUrl = window.location.origin;
-    const fullUrl = `${baseUrl}${iconUrl}`;
+    const fullUrl = `${origin}${iconUrl}`;
     const imgTag = `<img src="${fullUrl}" alt="Generated icon for ${key}" width="100" height="100" />`;
     
     navigator.clipboard.writeText(imgTag).then(() => {
@@ -54,7 +57,7 @@ export default function IconDemo() {
           <div className="flex flex-col justify-center">
             <p className="text-sm text-gray-500 mb-1">Icon URL:</p>
             <code className="bg-gray-100 p-2 rounded text-sm break-all">
-              {window.location.origin}{iconUrl}
+              {origin}{iconUrl}
             </code>
           </div>
         </div>
