@@ -7,7 +7,7 @@ export default function ToysNav() {
     <div className="space-y-4">
       <Button asChild variant="ghost" className="-ml-4">
         <Link href="/">
-          <ChevronLeft className="w-4 h-4 mr-2" />
+          <ChevronLeft className="w-4 font-eb-garamond h-4 mr-2" />
           Home
         </Link>
       </Button>

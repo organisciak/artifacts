@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { Toy } from '@/lib/toys';
 import { Music, Drum, Waves, Activity, Volleyball, 
-  Image,
+  Image, Table,
   Pointer, Flower, Fish, Pyramid } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -12,7 +12,7 @@ const IconMap = {
   Music, Drum, Waves,
   Pyramid, Activity, Volleyball,
   Pointer, Flower, Fish,
-  Image,
+  Image, Table,
 } as const;
 
 export function ToyCard({ toy, className }: { toy: Toy; className?: string }) {

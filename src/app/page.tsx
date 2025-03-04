@@ -6,9 +6,9 @@ export default function Home() {
   return (
     <main className="container mx-auto p-4 space-y-8">
       <div className="space-y-4">
-        <h1 className="text-4xl font-bold">Web Toys</h1>
-        <p className="text-lg text-muted-foreground">
-          A collection of interactive browser experiments. 
+        <h1 className="text-5xl font-bold italic font-eb-garamond">etc</h1>
+        <p className="text-lg text-muted-foreground font-eb-garamond">
+          A collection of interactive browser experiments and utilities.
         </p>
       </div>
       

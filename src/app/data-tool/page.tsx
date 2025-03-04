@@ -10,6 +10,8 @@ import SummaryStatistics from './components/SummaryStatistics';
 import { useCSVData } from './hooks/useCSVData';
 import { useTransformation } from './hooks/useTransformation';
 import TransformationHistory from './components/TransformationHistory';
+import ToysNav from '@/components/toys/nav';
+import { Footer } from '@/components/ui/footer';
 
 const CSVTransformer = () => {
   const [csvData, setCsvData] = useState(null);
@@ -130,6 +132,7 @@ const CSVTransformer = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <ToysNav />
       <h1 className="text-2xl font-bold mb-6">CSV Data Transformer</h1>
       <p className="text-gray-600 mb-4">
         This tool allows you to transform your CSV data using various techniques.
@@ -240,6 +243,9 @@ const CSVTransformer = () => {
       
       {/* Documentation Section */}
       <TransformationDocs />
+      
+      <hr className='mb-8' />
+      <Footer />
     </div>
   );
 };

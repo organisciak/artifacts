@@ -89,6 +89,16 @@ export const toys: Toy[] = [
     tags: ['SVG', 'Generative Art', 'API'],
     backgroundImage: '/icon/icon-generator',
   },
+  {
+    id: 'data-tool',
+    name: 'CSV Data Tool',
+    description: 'Transform, clean, and analyze CSV data with filtering, sorting, grouping, and anonymization features',
+    iconName: 'Table',
+    path: '/data-tool',
+    category: 'Utilities',
+    tags: ['CSV', 'Data Processing', 'Anonymization', 'Analytics'],
+    // backgroundImage: '/images/data-tool.png',
+  },
   /*{
     id: 'pointer-lock',
     name: 'Pointer Lock',
