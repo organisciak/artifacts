@@ -6,6 +6,7 @@ import FileUploadSection from './components/FileUploadSection';
 import TransformationSection from './components/TransformationSection';
 import ResultsSection from './components/ResultsSection';
 import TransformationDocs from './components/TransformationDocs';
+import SummaryStatistics from './components/SummaryStatistics';
 import { useCSVData } from './hooks/useCSVData';
 import { useTransformation } from './hooks/useTransformation';
 import TransformationHistory from './components/TransformationHistory';
@@ -37,27 +38,27 @@ const CSVTransformer = () => {
     useSalt,
     saltValue,
     clusteringMethod,
-    setClusteringMethod,
     keyingFunction,
-    setKeyingFunction,
     clusters,
     threshold,
-    setThreshold,
     normalizedValues,
     selectedClusters,
-    toggleClusterSelection,
-    handleNormalizedValueChange,
-    applyClusterChanges,
+    toggleColumnAnonymization,
+    updateAnonymizationType,
+    toggleColumnRemoval,
     toggleHashColumnSelection,
     setIdColumnName,
     setUseAutoColumnName,
+    getAutoColumnName,
     setHashAlgorithm,
     setUseSalt,
     setSaltValue,
-    getAutoColumnName,
-    toggleColumnAnonymization,
-    toggleColumnRemoval,
-    updateAnonymizationType,
+    setClusteringMethod,
+    setKeyingFunction,
+    setThreshold,
+    toggleClusterSelection,
+    handleNormalizedValueChange,
+    exportCSV,
     exportMapping,
     setTransformationType,
     setFilterColumn,
@@ -69,7 +70,6 @@ const CSVTransformer = () => {
     setSortDirection,
     setTransformedView,
     applyTransformation,
-    exportCSV,
     isProcessing,
     processedCount,
     totalToProcess,
@@ -77,7 +77,8 @@ const CSVTransformer = () => {
     transformationStack,
     currentStackIndex,
     undoTransformation,
-    redoTransformation
+    redoTransformation,
+    applyClusterChanges
   } = useTransformation(csvData, fileName, columns);
 
   // Add a new function to handle column transformation selections
@@ -100,37 +101,27 @@ const CSVTransformer = () => {
         break;
       case 'groupBy':
         setGroupByColumn(column);
+        // Find a numeric column for aggregation
+        const numericColumn = columns.find(col => {
+          if (col === column) return false; // Don't aggregate the groupBy column
+          // Check if column has numeric values
+          const hasNumericValues = csvData.some(row => {
+            const val = row[col];
+            return val !== null && val !== undefined && !isNaN(Number(val));
+          });
+          return hasNumericValues;
+        });
+        if (numericColumn) {
+          setAggregateColumn(numericColumn);
+        }
         break;
       case 'clustering':
         setFilterColumn(column);
         break;
-      case 'pseudonymize':
-        // Select the column for pseudonymization
-        toggleColumnAnonymization(column, true);
-        break;
-      case 'hashId':
-        // Add the column to hash ID calculation if not already selected
-        if (!selectedHashColumns.includes(column)) {
-          toggleHashColumnSelection(column);
-        }
-        break;
-      case 'dropColumns':
-        // Select the column for removal
-        toggleColumnRemoval(column, true);
-        // Apply the transformation immediately
-        setTimeout(() => applyTransformation(), 0);
-        break;
-      default:
-        break;
-    }
-    
-    // Scroll to the transformation section
-    const transformSection = document.querySelector('.transform-section');
-    if (transformSection) {
-      transformSection.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
+  // Handle file upload
   const handleFileUpload = useCallback((data, name, cols) => {
     setCsvData(data);
     setFileName(name);
@@ -169,7 +160,7 @@ const CSVTransformer = () => {
       
       {csvData && (
         <>
-          <div className="transform-section">
+          <div className="mt-8">
             <TransformationSection 
               transformationType={transformationType}
               setTransformationType={setTransformationType}
@@ -240,6 +231,11 @@ const CSVTransformer = () => {
           columnAnonymizationTypes={columnAnonymizationTypes}
           onColumnTransform={handleColumnTransform}
         />
+      )}
+      
+      {/* Summary Statistics Section */}
+      {transformedData && (
+        <SummaryStatistics data={transformedData} />
       )}
       
       {/* Documentation Section */}

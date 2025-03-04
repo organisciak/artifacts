@@ -30,9 +30,8 @@ const DataTable = ({
               >
                 <div className="flex items-center space-x-1">
                   {column}
-                  
                   <DropdownMenu>
-                    <DropdownMenuTrigger className="p-1 rounded hover:bg-gray-100">
+                    <DropdownMenuTrigger className="ml-1 p-1 rounded hover:bg-gray-100">
                       <ChevronDown className="h-3 w-3" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
@@ -41,46 +40,27 @@ const DataTable = ({
                       <DropdownMenuItem onClick={() => onColumnTransform(column, 'filter')}>
                         Filter by this column
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onColumnTransform(column, 'sort', 'asc')}>
+                        Sort ascending
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onColumnTransform(column, 'sort', 'desc')}>
+                        Sort descending
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => onColumnTransform(column, 'groupBy')}>
                         Group by this column
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => onColumnTransform(column, 'clustering')}>
-                        Clean & cluster values
+                        Cluster similar values
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <div className="flex items-center justify-between w-full">
-                          <span>Sort</span>
-                          <div className="flex space-x-1">
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onColumnTransform(column, 'sort', 'asc');
-                              }}
-                              className="p-1 rounded hover:bg-gray-100"
-                              title="Sort ascending"
-                            >
-                              <ArrowUp className="h-3 w-3" />
-                            </button>
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onColumnTransform(column, 'sort', 'desc');
-                              }}
-                              className="p-1 rounded hover:bg-gray-100"
-                              title="Sort descending"
-                            >
-                              <ArrowDown className="h-3 w-3" />
-                            </button>
-                          </div>
-                        </div>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => onColumnTransform(column, 'pseudonymize')}>
+                        Pseudonymize this column
                       </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onColumnTransform(column, 'dropColumns', column);
-                        }}
-                      >
-                        Drop Column
+                      <DropdownMenuItem onClick={() => onColumnTransform(column, 'hashId')}>
+                        Create hash ID using this column
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onColumnTransform(column, 'dropColumns')}>
+                        Drop this column
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -94,7 +74,8 @@ const DataTable = ({
             <tr key={rowIndex}>
               {columns.map((column, colIndex) => (
                 <td key={colIndex} className="px-6 py-4 whitespace-nowrap">
-                  {row[column] !== null && row[column] !== undefined ? String(row[column]) : ''}
+                  {row[column] !== null && row[column] !== undefined ? String(row[column]) : 
+                   <span className="text-gray-400 italic">null</span>}
                 </td>
               ))}
             </tr>
