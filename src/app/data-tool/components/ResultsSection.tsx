@@ -10,7 +10,8 @@ const ResultsSection = ({
   transformationType,
   mappingData,
   exportMapping,
-  columnAnonymizationTypes
+  columnAnonymizationTypes,
+  onColumnTransform
 }) => {
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
@@ -48,7 +49,10 @@ const ResultsSection = ({
         </p>
         
         {transformedView === 'table' ? (
-          <DataTable data={transformedData} />
+          <DataTable 
+            data={transformedData} 
+            onColumnTransform={onColumnTransform}
+          />
         ) : (
           <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto">
             {JSON.stringify(transformedData, null, 2)}

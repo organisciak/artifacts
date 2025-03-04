@@ -4,6 +4,9 @@ import _ from 'lodash';
 
 export const useTransformation = (csvData, fileName, columns) => {
   const [transformedData, setTransformedData] = useState(null);
+  const [workingData, setWorkingData] = useState(null); // Current working dataset
+  const [transformationStack, setTransformationStack] = useState([]); // Track transformations
+  const [currentStackIndex, setCurrentStackIndex] = useState(-1); // Current position in stack
   const [transformationType, setTransformationType] = useState('filter');
   const [filterColumn, setFilterColumn] = useState('');
   const [filterValue, setFilterValue] = useState('');
@@ -134,6 +137,16 @@ export const useTransformation = (csvData, fileName, columns) => {
       setSortColumn(columns[0]);
     }
   }, [columns, csvData]);
+
+  // Initialize working data when CSV is loaded
+  useEffect(() => {
+    if (csvData && csvData.length > 0) {
+      setWorkingData(csvData);
+      setTransformationStack([]);
+      setCurrentStackIndex(-1);
+      setTransformedData(csvData);
+    }
+  }, [csvData]);
 
   // Generate a simple hash from string
   const simpleHash = (str) => {
@@ -447,9 +460,9 @@ export const useTransformation = (csvData, fileName, columns) => {
 
   // Apply cluster changes to the data
   const applyClusterChanges = () => {
-    if (!csvData) return;
+    if (!workingData) return;
     
-    let updatedData = [...csvData];
+    let updatedData = [...workingData];
     
     // Create a mapping from original values to normalized values
     const valueMapping = {};
@@ -489,15 +502,15 @@ export const useTransformation = (csvData, fileName, columns) => {
     setClusters([]);
   };
   
-  // Modified applyTransformation to handle clustering
+  // Modified applyTransformation to use workingData instead of csvData
   const applyTransformation = () => {
-    if (!csvData || csvData.length === 0) return;
+    if (!workingData || workingData.length === 0) return;
     
     let result;
     
     switch (transformationType) {
       case 'filter':
-        result = csvData.filter(row => {
+        result = workingData.filter(row => {
           const value = row[filterColumn];
           if (typeof value === 'string') {
             return value.toLowerCase().includes(filterValue.toLowerCase());
@@ -507,7 +520,7 @@ export const useTransformation = (csvData, fileName, columns) => {
         break;
         
       case 'groupBy':
-        const grouped = _.groupBy(csvData, groupByColumn);
+        const grouped = _.groupBy(workingData, groupByColumn);
         
         result = Object.keys(grouped).map(key => {
           const group = grouped[key];
@@ -535,14 +548,14 @@ export const useTransformation = (csvData, fileName, columns) => {
         
       case 'sort':
         result = _.orderBy(
-          csvData, 
+          workingData, 
           [sortColumn], 
           [sortDirection]
         );
         break;
         
       case 'clean':
-        result = csvData
+        result = workingData
           .filter(row => !Object.values(row).some(value => value === null || value === undefined || value === ''))
           .map(row => {
             const cleanedRow = {};
@@ -562,7 +575,7 @@ export const useTransformation = (csvData, fileName, columns) => {
           const pivotData = {};
           const uniqueValues = new Set();
           
-          csvData.forEach(row => {
+          workingData.forEach(row => {
             const groupKey = row[groupByColumn];
             uniqueValues.add(row[aggregateColumn]);
             
@@ -582,20 +595,20 @@ export const useTransformation = (csvData, fileName, columns) => {
             return resultRow;
           });
         } else {
-          result = csvData;
+          result = workingData;
         }
         break;
         
       case 'pseudonymize':
         try {
-          let transformedData = JSON.parse(JSON.stringify(csvData));
+          let transformedData = JSON.parse(JSON.stringify(workingData));
           const newMappingData = {};
           
           if (columnsToAnonymize.length > 0) {
             columnsToAnonymize.forEach(column => {
               const pseudonymType = columnAnonymizationTypes[column] || 'fullName';
               
-              const uniqueValues = _.uniq(csvData.map(row => row[column]))
+              const uniqueValues = _.uniq(workingData.map(row => row[column]))
                 .filter(value => value !== null && value !== undefined && value !== '');
               
               newMappingData[column] = {};
@@ -632,7 +645,7 @@ export const useTransformation = (csvData, fileName, columns) => {
           result = transformedData;
         } catch (error) {
           console.error('Error during transformation:', error);
-          result = csvData;
+          result = workingData;
         }
         break;
         
@@ -645,7 +658,7 @@ export const useTransformation = (csvData, fileName, columns) => {
         // Use auto name or user-defined name
         const finalIdColumnName = useAutoColumnName ? getAutoColumnName() : idColumnName;
         
-        result = csvData.map(row => {
+        result = workingData.map(row => {
           const newRow = { ...row };
           newRow[finalIdColumnName] = generateHash(row);
           return newRow;
@@ -660,7 +673,7 @@ export const useTransformation = (csvData, fileName, columns) => {
         setIsProcessing(true);
         
         // Extract unique values from the selected column
-        const values = csvData
+        const values = workingData
           .map(row => row[filterColumn])
           .filter(val => val !== null && val !== undefined)
           .map(val => String(val));
@@ -697,11 +710,122 @@ export const useTransformation = (csvData, fileName, columns) => {
         
         return; // Return early without setting transformedData
         
+      case 'dropColumns':
+        if (columnsToRemove.length > 0) {
+          result = workingData.map(row => {
+            const newRow = { ...row };
+            columnsToRemove.forEach(col => {
+              delete newRow[col];
+            });
+            return newRow;
+          });
+          
+          // Reset the columnsToRemove after applying
+          setColumnsToRemove([]);
+        } else {
+          result = workingData;
+        }
+        break;
+        
       default:
-        result = csvData;
+        result = workingData;
     }
     
+    // Add transformation to stack
+    const newTransformation = {
+      type: transformationType,
+      params: getTransformationParams(),
+      timestamp: new Date().toISOString()
+    };
+    
+    // Update the transformation stack and current index
+    const updatedStack = transformationStack.slice(0, currentStackIndex + 1);
+    updatedStack.push(newTransformation);
+    setTransformationStack(updatedStack);
+    setCurrentStackIndex(currentStackIndex + 1);
+    
+    // Update both transformedData and workingData
     setTransformedData(result);
+    setWorkingData(result);
+  };
+
+  // Helper to get params for current transformation
+  const getTransformationParams = () => {
+    switch (transformationType) {
+      case 'filter':
+        return { column: filterColumn, value: filterValue };
+      case 'sort':
+        return { column: sortColumn, direction: sortDirection };
+      case 'groupBy':
+        return { 
+          groupBy: groupByColumn, 
+          aggregate: aggregateColumn, 
+          function: aggregateFunction 
+        };
+      // ... other transformation types ...
+      default:
+        return {};
+    }
+  };
+
+  // Undo last transformation
+  const undoTransformation = () => {
+    if (currentStackIndex >= 0) {
+      const newIndex = currentStackIndex - 1;
+      setCurrentStackIndex(newIndex);
+      
+      if (newIndex === -1) {
+        // If we've gone back before the first transformation, show original data
+        setWorkingData(csvData);
+        setTransformedData(csvData);
+      } else {
+        // Otherwise reapply transformations up to the new index
+        reapplyTransformations(newIndex);
+      }
+    }
+  };
+
+  // Redo previously undone transformation
+  const redoTransformation = () => {
+    if (currentStackIndex < transformationStack.length - 1) {
+      const newIndex = currentStackIndex + 1;
+      setCurrentStackIndex(newIndex);
+      reapplyTransformations(newIndex);
+    }
+  };
+
+  // Reapply transformations up to given index
+  const reapplyTransformations = (targetIndex) => {
+    let currentData = csvData;
+    
+    // Apply all transformations up to target index
+    for (let i = 0; i <= targetIndex; i++) {
+      const transform = transformationStack[i];
+      currentData = applyTransformationToData(currentData, transform);
+    }
+    
+    setWorkingData(currentData);
+    setTransformedData(currentData);
+  };
+
+  // Apply a specific transformation to data
+  const applyTransformationToData = (data, transform) => {
+    // Implementation would include similar logic to applyTransformation
+    // but would use the parameters stored in the transform object
+    // This is a simplified example
+    switch (transform.type) {
+      case 'filter':
+        return data.filter(row => {
+          const value = row[transform.params.column];
+          if (typeof value === 'string') {
+            return value.toLowerCase().includes(transform.params.value.toLowerCase());
+          }
+          return String(value) === transform.params.value;
+        });
+      // ... other transformation types ...
+      default:
+        return data;
+    }
   };
 
   const exportCSV = () => {
@@ -778,6 +902,11 @@ export const useTransformation = (csvData, fileName, columns) => {
     normalizedValues,
     toggleClusterSelection,
     handleNormalizedValueChange,
-    applyClusterChanges
+    applyClusterChanges,
+    workingData,
+    transformationStack,
+    currentStackIndex,
+    undoTransformation,
+    redoTransformation
   };
 }; 

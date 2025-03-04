@@ -63,9 +63,9 @@ const TransformationSection = ({
         <div>
           <label className="block text-sm font-medium text-gray-700">Transformation Type</label>
           <select 
-            value={transformationType} 
+            value={transformationType}
             onChange={(e) => setTransformationType(e.target.value)}
-            className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"
+            className="block w-full p-2 border border-gray-300 rounded-md shadow-sm"
           >
             <option value="filter">Filter Rows</option>
             <option value="groupBy">Group & Aggregate</option>
@@ -75,6 +75,7 @@ const TransformationSection = ({
             <option value="pseudonymize">Pseudonymize Data</option>
             <option value="hashId">Generate Hash IDs</option>
             <option value="clustering">Cluster & Edit Values</option>
+            <option value="dropColumns">Drop Columns</option>
           </select>
         </div>
         

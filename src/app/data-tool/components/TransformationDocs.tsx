@@ -115,6 +115,15 @@ const TransformationDocs = () => {
             <p className="text-sm text-gray-600"><strong>Example:</strong> Find and standardize variations like "United States", "USA", "U.S.A", and "US" in a Country column.</p>
           </div>
         </div>
+        
+        <div>
+          <h3 className="text-lg font-semibold text-blue-700">Drop Columns</h3>
+          <p className="mb-2">Remove unnecessary columns from your dataset.</p>
+          <div className="pl-4 border-l-2 border-blue-200">
+            <p className="text-sm text-gray-600 mb-1"><strong>Select columns:</strong> Choose which columns to completely remove from the dataset.</p>
+            <p className="text-sm text-gray-600"><strong>Example:</strong> Remove sensitive columns like "SSN" or "Phone Number" before sharing data with others, or remove irrelevant columns to simplify your analysis.</p>
+          </div>
+        </div>
       </div>
     </div>
   );
