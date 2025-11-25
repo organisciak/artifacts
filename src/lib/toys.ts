@@ -41,6 +41,25 @@ export const toys: Toy[] = [
     tags: ['Touch Events', 'Web Audio API'],
   },
   {
+    id: 'music-viz2',
+    name: 'Candy Warp Viz',
+    description: 'Endless color warp with mic-reactive rings',
+    iconName: 'Music',
+    path: '/music-viz2',
+    category: 'Audio',
+    tags: ['Three.js', 'Web Audio API', 'Generative Art'],
+  },
+  {
+    id: 'music-viz',
+    name: 'Mountain Pulse',
+    description: '3D wireframe mountain that pulses and morphs with audio',
+    iconName: 'Mountain',
+    path: '/music-viz',
+    category: 'Audio',
+    tags: ['Three.js', 'Web Audio API', 'Generative Art'],
+    backgroundImage: '/bg-videos/mtn-viz.mp4'
+  },
+  {
     id: 'meditative-fractals',
     name: 'Fractals',
     description: '',

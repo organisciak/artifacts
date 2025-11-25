@@ -2,12 +2,21 @@
 
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import ToysNav from '@/components/toys/nav';
 
 export default function MusicVizPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showControls, setShowControls] = useState(false);
+
+  // Adjustable parameters
+  const [smoothing, setSmoothing] = useState(0.7);
+  const [displacement, setDisplacement] = useState(30);
+  const [rotationMultiplier, setRotationMultiplier] = useState(0.15);
+  const [scaleMultiplier, setScaleMultiplier] = useState(1.2);
+  const [spatialSmoothing, setSpatialSmoothing] = useState(2);
 
   // Refs for Three.js and audio
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -35,6 +44,23 @@ export default function MusicVizPage() {
   // Store original vertex positions for displacement
   const originalPositionsRef = useRef<Float32Array | null>(null);
   const timeRef = useRef(0);
+
+  // Smoothed frequency data for terrain
+  const smoothedFrequencyRef = useRef<Float32Array | null>(null);
+
+  // Refs for adjustable parameters (to access in animation loop)
+  const smoothingRef = useRef(smoothing);
+  const displacementRef = useRef(displacement);
+  const rotationMultiplierRef = useRef(rotationMultiplier);
+  const scaleMultiplierRef = useRef(scaleMultiplier);
+  const spatialSmoothingRef = useRef(spatialSmoothing);
+
+  // Keep refs in sync with state
+  useEffect(() => { smoothingRef.current = smoothing; }, [smoothing]);
+  useEffect(() => { displacementRef.current = displacement; }, [displacement]);
+  useEffect(() => { rotationMultiplierRef.current = rotationMultiplier; }, [rotationMultiplier]);
+  useEffect(() => { scaleMultiplierRef.current = scaleMultiplier; }, [scaleMultiplier]);
+  useEffect(() => { spatialSmoothingRef.current = spatialSmoothing; }, [spatialSmoothing]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -198,32 +224,86 @@ export default function MusicVizPage() {
           0.1
         );
 
-        // Displace terrain vertices over time
-        if (originalPositionsRef.current) {
+        // Displace terrain vertices based on frequency data
+        if (originalPositionsRef.current && analyserRef.current) {
           const geometry = mountainRef.current.geometry;
           const posAttr = geometry.attributes.position;
           const original = originalPositionsRef.current;
-          const time = timeRef.current;
-          const beatIntensity = colorTransitionRef.current;
+
+          // Get frequency data
+          const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+          analyserRef.current.getByteFrequencyData(dataArray);
+
+          // Initialize smoothed frequency array if needed
+          if (!smoothedFrequencyRef.current || smoothedFrequencyRef.current.length !== dataArray.length) {
+            smoothedFrequencyRef.current = new Float32Array(dataArray.length);
+          }
+
+          // Smooth the frequency data (temporal smoothing)
+          const smoothingVal = smoothingRef.current;
+          for (let i = 0; i < dataArray.length; i++) {
+            smoothedFrequencyRef.current[i] =
+              smoothedFrequencyRef.current[i] * smoothingVal +
+              dataArray[i] * (1 - smoothingVal);
+          }
+
+          const frequencyData = smoothedFrequencyRef.current;
+          const numBins = frequencyData.length;
 
           for (let i = 0; i < posAttr.count; i++) {
             const ox = original[i * 3];
             const oy = original[i * 3 + 1];
             const oz = original[i * 3 + 2];
 
-            // Create wave displacement based on position and time
-            const waveX = Math.sin(ox * 0.1 + time) * Math.cos(oz * 0.08 + time * 0.7);
-            const waveZ = Math.cos(ox * 0.12 + time * 0.8) * Math.sin(oz * 0.1 + time);
+            // Map vertex position to frequency bin
+            // Use distance from center to map to frequency (low freq in center, high on edges)
+            const distance = Math.sqrt(ox * ox + oz * oz);
+            const maxDistance = 56; // Approximate max distance on the terrain
+            const normalizedDist = Math.min(distance / maxDistance, 1);
 
-            // Base subtle movement + beat-reactive amplification
-            const baseDisplacement = 0.5;
-            const beatBoost = beatIntensity * 4;
-            const displacement = baseDisplacement + beatBoost;
+            // Map to frequency bin (low frequencies in center, high on edges)
+            const binIndex = Math.floor(normalizedDist * (numBins - 1));
+
+            // Get surrounding bins for spatial smoothing
+            const spatialRange = spatialSmoothingRef.current;
+            const binStart = Math.max(0, binIndex - spatialRange);
+            const binEnd = Math.min(numBins - 1, binIndex + spatialRange);
+            let freqSum = 0;
+            let binCount = 0;
+            for (let b = binStart; b <= binEnd; b++) {
+              freqSum += frequencyData[b];
+              binCount++;
+            }
+            const avgFreq = freqSum / binCount;
+
+            // Normalize frequency value (0-255 to 0-1)
+            const normalizedFreq = avgFreq / 255;
+
+            // Apply displacement based on frequency
+            // Scale the displacement by frequency intensity
+            const displacementAmount = normalizedFreq * displacementRef.current;
 
             // Apply displacement to Y (height)
-            const newY = oy + waveX * displacement + waveZ * displacement * 0.5;
+            const newY = oy + displacementAmount;
 
             posAttr.setY(i, newY);
+          }
+          posAttr.needsUpdate = true;
+        } else if (originalPositionsRef.current) {
+          // When not listening, just use original positions with subtle animation
+          const geometry = mountainRef.current.geometry;
+          const posAttr = geometry.attributes.position;
+          const original = originalPositionsRef.current;
+          const time = timeRef.current;
+
+          for (let i = 0; i < posAttr.count; i++) {
+            const ox = original[i * 3];
+            const oy = original[i * 3 + 1];
+            const oz = original[i * 3 + 2];
+
+            // Subtle ambient wave when not listening
+            const wave = Math.sin(ox * 0.1 + time) * Math.cos(oz * 0.08 + time * 0.7) * 0.3;
+            posAttr.setY(i, oy + wave);
           }
           posAttr.needsUpdate = true;
         }
@@ -245,12 +325,12 @@ export default function MusicVizPage() {
         // Map bass to rotation speed - slower base, very brief speed bursts
         const normalizedBass = bassAvg / 255;
         const bassPower = Math.pow(normalizedBass, 5); // Higher power = only strong beats trigger
-        rotationSpeedRef.current = 0.0008 + bassPower * 0.15;
+        rotationSpeedRef.current = 0.0008 + bassPower * rotationMultiplierRef.current;
 
         // Map overall energy to scale - more pronounced throb (1 to 2.2)
         const normalizedEnergy = overallAvg / 255;
         const energyPower = Math.pow(normalizedEnergy, 1.5); // Slightly boosted
-        scaleRef.current = 1 + energyPower * 1.2;
+        scaleRef.current = 1 + energyPower * scaleMultiplierRef.current;
 
         // Update color transition based on bass (throbbing with beat)
         const bassBurst = Math.pow(normalizedBass, 1.5); // Less aggressive power for more response
@@ -397,33 +477,36 @@ export default function MusicVizPage() {
       <div ref={containerRef} className="w-full h-full" />
 
       {/* Controls overlay */}
-      <div className="absolute top-4 left-4 z-10">
-        <button
-          onClick={isListening ? stopListening : startListening}
-          className={`px-6 py-3 font-mono text-sm tracking-wider transition-all border-2 bg-transparent ${
-            isListening
-              ? 'border-red-500 text-red-400 hover:bg-red-500/20 hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]'
-              : 'border-amber-400 text-amber-300 hover:bg-amber-400/20 hover:shadow-[0_0_20px_rgba(251,191,36,0.3)]'
-          }`}
-        >
-          {isListening ? '[ STOP ]' : '[ START MIC ]'}
-        </button>
+      <div className="absolute top-4 left-4 z-10 space-y-3">
+        <ToysNav variant="mono" tone="amber" />
+        <div>
+          <button
+            onClick={isListening ? stopListening : startListening}
+            className={`px-6 py-3 font-mono text-sm tracking-wider transition-all border-2 bg-transparent ${
+              isListening
+                ? 'border-red-500 text-red-400 hover:bg-red-500/20 hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]'
+                : 'border-amber-400 text-amber-300 hover:bg-amber-400/20 hover:shadow-[0_0_20px_rgba(251,191,36,0.3)]'
+            }`}
+          >
+            {isListening ? '[ STOP ]' : '[ START MIC ]'}
+          </button>
 
-        {error && (
-          <p className="mt-2 text-red-400 text-sm font-mono max-w-xs">{error}</p>
-        )}
+          {error && (
+            <p className="mt-2 text-red-400 text-sm font-mono max-w-xs">{error}</p>
+          )}
 
-        {isListening && (
-          <p className="mt-2 text-violet-400 text-sm font-mono">
-            :: listening ::
-          </p>
-        )}
+          {isListening && (
+            <p className="mt-2 text-violet-400 text-sm font-mono">
+              :: listening ::
+            </p>
+          )}
 
-        {isFullscreen && (
-          <p className="mt-2 text-gray-500 text-xs font-mono">
-            double-click to exit
-          </p>
-        )}
+          {isFullscreen && (
+            <p className="mt-2 text-gray-500 text-xs font-mono">
+              double-click to exit
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Instructions */}
@@ -431,6 +514,101 @@ export default function MusicVizPage() {
         <p>{'// drag to orbit | scroll to zoom'}</p>
         <p>{'// double-click for fullscreen'}</p>
       </div>
+
+      {/* Settings toggle button */}
+      <button
+        onClick={() => setShowControls(!showControls)}
+        className="absolute top-4 right-4 z-10 px-4 py-2 font-mono text-sm border-2 border-gray-600 text-gray-400 hover:bg-gray-600/20 bg-transparent"
+      >
+        {showControls ? '[ HIDE ]' : '[ PARAMS ]'}
+      </button>
+
+      {/* Control panel */}
+      {showControls && (
+        <div className="absolute top-16 right-4 z-10 bg-black/80 border border-gray-700 p-4 font-mono text-sm space-y-4 w-72">
+          <div className="text-amber-400 text-xs mb-3">{'// PARAMETERS'}</div>
+
+          <div className="space-y-1">
+            <div className="flex justify-between text-gray-400">
+              <span>Smoothing</span>
+              <span>{smoothing.toFixed(2)}</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="0.95"
+              step="0.05"
+              value={smoothing}
+              onChange={(e) => setSmoothing(parseFloat(e.target.value))}
+              className="w-full accent-amber-400"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex justify-between text-gray-400">
+              <span>Displacement</span>
+              <span>{displacement}</span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="30"
+              step="1"
+              value={displacement}
+              onChange={(e) => setDisplacement(parseFloat(e.target.value))}
+              className="w-full accent-amber-400"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex justify-between text-gray-400">
+              <span>Spatial Smooth</span>
+              <span>{spatialSmoothing}</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="10"
+              step="1"
+              value={spatialSmoothing}
+              onChange={(e) => setSpatialSmoothing(parseInt(e.target.value))}
+              className="w-full accent-amber-400"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex justify-between text-gray-400">
+              <span>Rotation Mult</span>
+              <span>{rotationMultiplier.toFixed(2)}</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="0.5"
+              step="0.01"
+              value={rotationMultiplier}
+              onChange={(e) => setRotationMultiplier(parseFloat(e.target.value))}
+              className="w-full accent-violet-400"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex justify-between text-gray-400">
+              <span>Scale Mult</span>
+              <span>{scaleMultiplier.toFixed(2)}</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="3"
+              step="0.1"
+              value={scaleMultiplier}
+              onChange={(e) => setScaleMultiplier(parseFloat(e.target.value))}
+              className="w-full accent-violet-400"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
