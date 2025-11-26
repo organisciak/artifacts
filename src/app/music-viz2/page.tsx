@@ -95,6 +95,7 @@ export default function MusicViz2Page() {
   const [presetId, setPresetId] = useState<ResponsePreset['id']>('spiky');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(false);
+  const [solidFill, setSolidFill] = useState(true);
 
   const animationRef = useRef<number | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -103,16 +104,52 @@ export default function MusicViz2Page() {
   const presetRef = useRef<ResponsePreset>(responsePresets[0]);
   const bloomsRef = useRef<Bloom[]>([]);
   const nextIdRef = useRef(0);
+  const colorIndexRef = useRef(0);
+  const beatFloorRef = useRef(0);
+  const lastBeatSignalRef = useRef(0);
+  const bpmEstimateRef = useRef<number | null>(null);
+  const beatTimesRef = useRef<number[]>([]);
+  const lastBeatAtRef = useRef<number | null>(null);
   const eqRef = useRef({ low: 0, mid: 0, high: 0, overall: 0 });
   const sizeRef = useRef({ width: 0, height: 0, dpr: 1 });
   const lastTimeRef = useRef<number | null>(null);
   const spawnTimerRef = useRef(0);
+  const solidFillRef = useRef(true);
+  const isListeningRef = useRef(false);
+  const beatCooldownRef = useRef(0);
+
+  const getNextColor = () => {
+    const idx = colorIndexRef.current % palette.length;
+    colorIndexRef.current = (colorIndexRef.current + 3) % palette.length;
+    const base = hexToRgb(palette[idx]);
+    const boost = 1.08 + Math.random() * 0.24;
+    return {
+      r: Math.min(255, base.r * boost),
+      g: Math.min(255, base.g * boost),
+      b: Math.min(255, base.b * boost),
+    };
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    const applyTempoPreset = (
+      preset: ResponsePreset,
+      bpm: number | null
+    ): ResponsePreset => {
+      const tempo = bpm ? clamp(0, (bpm - 90) / 70, 1) : 0;
+      return {
+        ...preset,
+        smoothing: clamp(0.45, preset.smoothing - 0.08 * tempo, 0.92),
+        spike: preset.spike + 0.3 * tempo,
+        ringPower: preset.ringPower + 0.25 * tempo,
+        zoomBoost: preset.zoomBoost * (1 + 0.28 * tempo),
+        trail: clamp(0.08, preset.trail * (1 - 0.12 * tempo) + 0.02 * tempo, 0.2),
+      };
+    };
 
     const resize = () => {
       const { clientWidth, clientHeight } = canvas;
@@ -128,9 +165,7 @@ export default function MusicViz2Page() {
 
     const spawnBloom = () => {
       const { width, height } = sizeRef.current;
-      const color = hexToRgb(
-        palette[Math.floor(Math.random() * palette.length)]
-      );
+      const color = getNextColor();
       const spread = Math.min(width, height) * 0.12;
       bloomsRef.current.push({
         id: nextIdRef.current++,
@@ -155,21 +190,30 @@ export default function MusicViz2Page() {
       const lastTime = lastTimeRef.current ?? now;
       const delta = Math.min(0.05, (now - lastTime) / 1000);
       lastTimeRef.current = now;
-      const preset = presetRef.current;
+      const preset = applyTempoPreset(presetRef.current, bpmEstimateRef.current);
       const { width, height, dpr } = sizeRef.current;
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.fillStyle = `rgba(5, 10, 18, ${preset.trail})`;
       ctx.fillRect(0, 0, width, height);
 
+      let beatSignal = 0;
+
       if (analyserRef.current && freqDataRef.current) {
         const data = freqDataRef.current;
+        analyserRef.current.smoothingTimeConstant = preset.smoothing;
         analyserRef.current.getByteFrequencyData(data);
         const low = averageRange(data, 2, 24) / 255;
         const mid = averageRange(data, 24, 80) / 255;
         const high = averageRange(data, 80, 160) / 255;
         const overall =
           (averageRange(data, 0, data.length) / 255 + low + mid + high) / 4;
+
+        beatSignal =
+          low * 1.15 +
+          mid * 0.3 +
+          high * 0.65 +
+          overall * 0.5;
 
         const lerp = preset.smoothing;
         eqRef.current.low = lerpValue(eqRef.current.low, Math.pow(low, preset.ringPower), lerp);
@@ -188,7 +232,95 @@ export default function MusicViz2Page() {
       const zoom = 1 + eq.low * preset.zoomBoost;
       const spawnInterval = clamp(0.28, 0.95 - eq.overall * 0.45, 1);
       spawnTimerRef.current += delta;
-      if (spawnTimerRef.current >= spawnInterval) {
+      beatCooldownRef.current = Math.max(0, beatCooldownRef.current - delta);
+
+      beatFloorRef.current = lerpValue(
+        beatFloorRef.current || beatSignal,
+        beatSignal,
+        0.04
+      );
+      const beatDelta = beatSignal - lastBeatSignalRef.current;
+      lastBeatSignalRef.current = beatSignal;
+      const floor = beatFloorRef.current;
+      const headroom = Math.max(0, beatSignal - floor);
+      const ratio = Math.min(4, beatSignal / (floor + 0.08));
+      const beatEnergy = headroom * 0.8 + Math.max(0, beatDelta) * 0.8;
+      const beatThreshold = 0.025 + floor * 0.34;
+      const hasEnergy = beatSignal > 0.02 || eq.overall > 0.025;
+      const quiet = beatSignal < 0.012 && eq.overall < 0.018;
+      if (lastBeatAtRef.current && now / 1000 - lastBeatAtRef.current > 3) {
+        bpmEstimateRef.current = null;
+      }
+      const nowSeconds = now / 1000;
+      const sinceBeat = lastBeatAtRef.current
+        ? nowSeconds - lastBeatAtRef.current
+        : Infinity;
+      if (bpmEstimateRef.current) {
+        if (sinceBeat > 0.6 && sinceBeat < 2.5) {
+          bpmEstimateRef.current = lerpValue(
+            bpmEstimateRef.current,
+            bpmEstimateRef.current * 0.92,
+            0.2
+          );
+        } else if (sinceBeat >= 2.5) {
+          bpmEstimateRef.current = null;
+        }
+      }
+      const allowBeatSpawn =
+        isListeningRef.current && analyserRef.current && beatCooldownRef.current <= 0;
+
+      if (allowBeatSpawn && hasEnergy) {
+        const hasBeat =
+          beatEnergy > beatThreshold ||
+          ratio > 1.18 ||
+          (beatDelta > 0.025 && headroom > 0.02);
+        const minGapReached = spawnTimerRef.current >= 0.1;
+        const staleForTooLong = spawnTimerRef.current >= 0.7 && !quiet;
+        if (hasBeat && minGapReached) {
+          spawnTimerRef.current = 0;
+          const beatSeconds = now / 1000;
+          const times = beatTimesRef.current;
+          times.push(beatSeconds);
+          if (times.length > 12) times.shift();
+          if (times.length >= 4) {
+            const intervals: number[] = [];
+            for (let i = 1; i < times.length; i++) {
+              const diff = times[i] - times[i - 1];
+              if (diff > 0.25 && diff < 1.8) {
+                intervals.push(diff);
+              }
+            }
+            if (intervals.length >= 3) {
+              intervals.sort((a, b) => a - b);
+              const mid = intervals[Math.floor(intervals.length / 2)];
+              const bpmRaw = 60 / mid;
+              const clamped = clamp(70, bpmRaw, 180);
+              if (Number.isFinite(clamped)) {
+                const prev = bpmEstimateRef.current ?? clamped;
+                bpmEstimateRef.current = lerpValue(prev, clamped, 0.25);
+              }
+            }
+          }
+          const bpm = bpmEstimateRef.current;
+          const targetCooldown = bpm
+            ? clamp(0.08, (60 / bpm) * 0.5, 0.26)
+            : 0.2 + Math.random() * 0.18;
+          beatCooldownRef.current = targetCooldown;
+          const burstCount =
+            beatEnergy > beatThreshold * 1.8 || ratio > 1.55 ? 2 : 1;
+          for (let b = 0; b < burstCount; b++) {
+            spawnBloom();
+          }
+          if (beatEnergy > beatThreshold * 2.2 && Math.random() > 0.35) {
+            spawnBloom();
+          }
+          lastBeatAtRef.current = beatSeconds;
+        } else if (staleForTooLong) {
+          spawnTimerRef.current = 0;
+          beatCooldownRef.current = 0.18;
+          spawnBloom();
+        }
+      } else if (spawnTimerRef.current >= spawnInterval) {
         spawnTimerRef.current = 0;
         spawnBloom();
         if (eq.low > 0.75 && Math.random() > 0.45) {
@@ -201,17 +333,20 @@ export default function MusicViz2Page() {
         bloom.ringPhase += (0.6 + eq.high * 2.2) * delta;
       });
 
-      for (let i = bloomsRef.current.length - 1; i >= 0; i--) {
-        const bloom = bloomsRef.current[i];
+      const blooms = bloomsRef.current;
+      const survivors: Bloom[] = [];
+      for (let i = 0; i < blooms.length; i++) {
+        const bloom = blooms[i];
         bloom.alpha = Math.max(
           0,
           1 - bloom.radius / (diag * (0.7 + eq.overall * 0.4))
         );
-        drawBloom(ctx, bloom, eq, preset);
-        if (bloom.radius > diag * 1.4 || bloom.alpha < 0.05) {
-          bloomsRef.current.splice(i, 1);
+        drawBloom(ctx, bloom, eq, preset, solidFillRef.current);
+        if (!(bloom.radius > diag * 1.4 || bloom.alpha < 0.05)) {
+          survivors.push(bloom);
         }
       }
+      bloomsRef.current = survivors;
     };
 
     animationRef.current = requestAnimationFrame(animate);
@@ -234,6 +369,14 @@ export default function MusicViz2Page() {
       analyserRef.current.smoothingTimeConstant = nextPreset.smoothing;
     }
   }, [presetId]);
+
+  useEffect(() => {
+    solidFillRef.current = solidFill;
+  }, [solidFill]);
+
+  useEffect(() => {
+    isListeningRef.current = isListening;
+  }, [isListening]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -267,6 +410,9 @@ export default function MusicViz2Page() {
       source.connect(analyser);
       analyserRef.current = analyser;
       freqDataRef.current = new Uint8Array(analyser.frequencyBinCount);
+      bpmEstimateRef.current = null;
+      beatTimesRef.current = [];
+      lastBeatAtRef.current = null;
       setIsListening(true);
       setError(null);
     } catch (err) {
@@ -297,34 +443,43 @@ export default function MusicViz2Page() {
 
       <div className="absolute top-4 left-4 z-10 space-y-3">
         <ToysNav variant="mono" tone="emerald" />
-        <div className="space-y-2">
-          <button
-            onClick={isListening ? stopListening : startListening}
-            className={`pointer-events-auto px-5 py-3 font-mono text-xs tracking-[0.08em] border transition-all shadow-lg ${
-              isListening
-                ? 'border-emerald-300 text-emerald-200 bg-emerald-300/10 hover:bg-emerald-300/20'
-                : 'border-amber-300 text-amber-100 bg-amber-300/10 hover:bg-amber-300/20'
-            }`}
-          >
-            {isListening ? '[ STOP LISTENING ]' : '[ START MICROPHONE ]'}
-          </button>
-          {error && (
-            <p className="pointer-events-auto max-w-xs font-mono text-xs text-red-300">
-              {error}
-            </p>
-          )}
-          {isFullscreen && (
-            <p className="font-mono text-[11px] text-slate-400">
-              double-click to exit fullscreen
-            </p>
-          )}
-          {!isListening && (
+        {isListening && (
+          <div className="space-y-2">
+            <button
+              onClick={stopListening}
+              className="pointer-events-auto border-emerald-300 text-emerald-200 bg-emerald-300/10 hover:bg-emerald-300/20 px-5 py-3 font-mono text-xs tracking-[0.08em] border transition-all shadow-lg"
+            >
+              [ STOP LISTENING ]
+            </button>
+            {isFullscreen && (
+              <p className="font-mono text-[11px] text-slate-400">
+                double-click to exit fullscreen
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {!isListening && (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+          <div className="pointer-events-auto space-y-3 text-center">
+            <button
+              onClick={startListening}
+              className="mx-auto rounded-full border-2 border-amber-300 bg-amber-300/15 px-8 py-4 font-mono text-sm uppercase tracking-[0.14em] text-amber-100 shadow-lg shadow-amber-500/20 transition-all hover:-translate-y-0.5 hover:border-amber-200 hover:text-white hover:shadow-amber-300/40"
+            >
+              [ START MICROPHONE ]
+            </button>
+            {error && (
+              <p className="max-w-xs font-mono text-xs text-red-300">
+                {error}
+              </p>
+            )}
             <p className="font-mono text-[11px] text-slate-300/80">
               (beats wake the rings)
             </p>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
         <button
@@ -362,6 +517,27 @@ export default function MusicViz2Page() {
                 </button>
               ))}
             </div>
+            <div className="mt-4 flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+              <div className="pr-3">
+                <p className="text-[12px] uppercase tracking-[0.12em] text-slate-200">
+                  Solid fill
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  Opaque cores with ghosted edges.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSolidFill((prev) => !prev)}
+                className={`h-9 w-20 rounded-full border text-[12px] uppercase tracking-[0.12em] transition-colors ${
+                  solidFill
+                    ? 'border-emerald-300 bg-emerald-300/20 text-white shadow-[0_0_0_1px_rgba(52,211,153,0.35)]'
+                    : 'border-white/15 bg-slate-900 text-slate-200 hover:border-white/30 hover:bg-white/5'
+                }`}
+              >
+                {solidFill ? 'On' : 'Off'}
+              </button>
+            </div>
             <p className="mt-3 text-[11px] text-slate-400">
               Pick a response curve to change how low/mid/high peaks drive the rings.
             </p>
@@ -386,7 +562,8 @@ const drawBloom = (
   ctx: CanvasRenderingContext2D,
   bloom: Bloom,
   eq: { low: number; mid: number; high: number; overall: number },
-  preset: ResponsePreset
+  preset: ResponsePreset,
+  solidFill: boolean
 ) => {
   ctx.save();
   ctx.translate(bloom.x, bloom.y);
@@ -394,6 +571,7 @@ const drawBloom = (
   ctx.globalAlpha = bloom.alpha;
 
   const { r, g, b } = bloom.color;
+  const ringBase = bloom.radius * (1.15 + eq.mid * 0.4);
 
   // Core fill
   const coreGradient = ctx.createRadialGradient(
@@ -413,8 +591,16 @@ const drawBloom = (
   ctx.arc(0, 0, bloom.radius * 1.05, 0, Math.PI * 2);
   ctx.fill();
 
+  if (solidFill) {
+    const fillRadius = ringBase * 0.98;
+    const fillAlpha = clamp(0.72, 0.92 + eq.overall * 0.2, 1);
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${fillAlpha})`;
+    ctx.beginPath();
+    ctx.arc(0, 0, fillRadius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   // Outer ring
-  const ringBase = bloom.radius * (1.15 + eq.mid * 0.4);
   const spikes = 42;
   const spikeEnergy =
     Math.pow(eq.low, preset.ringPower) * (0.7 + preset.spike) +

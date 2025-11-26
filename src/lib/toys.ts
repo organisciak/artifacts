@@ -43,10 +43,11 @@ export const toys: Toy[] = [
   {
     id: 'music-viz2',
     name: 'Candy Warp Viz',
-    description: 'Endless color warp with mic-reactive rings',
+    description: 'Endless music-reactive color warp',
     iconName: 'Music',
     path: '/music-viz2',
     category: 'Audio',
+    backgroundImage: '/bg-videos/ring-music-viz.mp4',
     tags: ['Three.js', 'Web Audio API', 'Generative Art'],
   },
   {

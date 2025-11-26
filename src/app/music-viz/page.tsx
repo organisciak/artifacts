@@ -479,35 +479,48 @@ export default function MusicVizPage() {
       {/* Controls overlay */}
       <div className="absolute top-4 left-4 z-10 space-y-3">
         <ToysNav variant="mono" tone="amber" />
-        <div>
-          <button
-            onClick={isListening ? stopListening : startListening}
-            className={`px-6 py-3 font-mono text-sm tracking-wider transition-all border-2 bg-transparent ${
-              isListening
-                ? 'border-red-500 text-red-400 hover:bg-red-500/20 hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]'
-                : 'border-amber-400 text-amber-300 hover:bg-amber-400/20 hover:shadow-[0_0_20px_rgba(251,191,36,0.3)]'
-            }`}
-          >
-            {isListening ? '[ STOP ]' : '[ START MIC ]'}
-          </button>
+        {isListening && (
+          <div>
+            <button
+              onClick={stopListening}
+              className="px-6 py-3 font-mono text-sm tracking-wider transition-all border-2 border-red-500 text-red-400 hover:bg-red-500/20 hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]"
+            >
+              [ STOP ]
+            </button>
 
-          {error && (
-            <p className="mt-2 text-red-400 text-sm font-mono max-w-xs">{error}</p>
-          )}
-
-          {isListening && (
             <p className="mt-2 text-violet-400 text-sm font-mono">
               :: listening ::
             </p>
-          )}
 
-          {isFullscreen && (
-            <p className="mt-2 text-gray-500 text-xs font-mono">
-              double-click to exit
-            </p>
-          )}
-        </div>
+            {isFullscreen && (
+              <p className="mt-2 text-gray-500 text-xs font-mono">
+                double-click to exit
+              </p>
+            )}
+          </div>
+        )}
       </div>
+
+      {!isListening && (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+          <div className="pointer-events-auto space-y-3 text-center">
+            <button
+              onClick={startListening}
+              className="mx-auto rounded-full border-2 border-amber-400 bg-amber-400/15 px-8 py-4 font-mono text-sm uppercase tracking-[0.14em] text-amber-200 shadow-lg shadow-amber-500/20 transition-all hover:-translate-y-0.5 hover:border-amber-200 hover:text-white hover:shadow-amber-300/40"
+            >
+              [ START MIC ]
+            </button>
+            {error && (
+              <p className="max-w-xs font-mono text-xs text-red-400">
+                {error}
+              </p>
+            )}
+            <p className="font-mono text-[11px] text-gray-400">
+              (tap, clap, or play something nearby)
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Instructions */}
       <div className="absolute bottom-4 left-4 z-10 text-gray-500 text-xs font-mono max-w-md space-y-1">
