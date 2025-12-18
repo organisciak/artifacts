@@ -1,4 +1,4 @@
-// Explort SVG button
+// Export SVG button
 
 export type ExportOptions = {
   filename?: string;

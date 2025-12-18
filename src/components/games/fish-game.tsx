@@ -380,7 +380,7 @@ const FishGame = () => {
                 } else {
                   if (gameManagerRef.current) {
                     gameManagerRef.current.resume();
-                    setIsPaused(true);
+                    setIsPaused(false);
                   }
                 }
               }}

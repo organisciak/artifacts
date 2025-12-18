@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "tmp/test-dist",
+    "module": "commonjs",
+    "target": "ES2019",
+    "moduleResolution": "node",
+    "types": ["node"],
+    "noEmit": false,
+    "isolatedModules": false,
+    "declaration": false,
+    "sourceMap": false
+  },
+  "include": [
+    "src/game/GameManager.ts",
+    "src/game/entities/**/*.ts",
+    "src/game/__tests__/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}

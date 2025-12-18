@@ -60,6 +60,15 @@ export const toys: Toy[] = [
     tags: ['Canvas', 'Animation', 'Interactive', 'Accelerometer'],
   },
   {
+    id: 'celestial-slide',
+    name: 'Celestial Slide',
+    description: 'A shimmering sliding puzzle with tracked best orbits across multiple grid sizes',
+    iconName: 'Puzzle',
+    path: '/games/celestial-slide',
+    category: 'Games',
+    tags: ['Puzzle', 'Interactive', 'Animation', 'Game Design'],
+  },
+  {
     id: 'bauhaus-pattern',
     name: 'Bauhaus',
     description: '',

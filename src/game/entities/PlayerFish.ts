@@ -1,16 +1,17 @@
 /**
- * PlayerFish class extending the base Fish class with player-specific behavior.
- * 
- * Additional Properties:
- * - invincibilityTimer
- * - score
- * - inputState
- * 
- * Additional Methods:
- * - handleInput(): Processes accelerometer/touch input
- * - grow(): Increases size when eating smaller fish
- * - shrink(): Reduces size when hit by larger fish
- * - checkBoundaries(): Keeps player within game bounds
+ * PlayerFish extends the base Fish with player-controlled movement and survival mechanics.
+ *
+ * Additional state:
+ * - gravityX / gravityY: Virtual gravity applied when using motion controls
+ * - targetX / targetY: Pointer target when using touch or mouse steering
+ * - maxSpeed: Speed clamp to keep movement responsive
+ * - invincibilityEndTime: Timestamp tracking temporary invulnerability after hits
+ *
+ * Notable methods:
+ * - updatePointerTarget(): Switches to pointer controls and sets the desired destination
+ * - update(): Applies the current control scheme, clamps velocity, and enforces boundaries
+ * - isInvincible() / makeInvincible(): Manage brief invulnerability windows after damage
+ * - draw(): Renders a distinct player sprite with invincibility feedback and motion flair
  */
 
 import { Fish } from './Fish';
