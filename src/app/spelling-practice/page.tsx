@@ -59,23 +59,23 @@ function speakWord(word: string) {
 }
 
 function getLetterChoices(word: string, confusables: string[]) {
-  const needed = word.split("");
-  const confusableLetters = confusables.join("").split("");
-  const pooled = [...needed, ...confusableLetters, ...ALPHABET];
-
-  const counts: Record<string, number> = {};
-  needed.forEach((letter) => {
-    counts[letter] = (counts[letter] ?? 0) + 1;
-  });
-
-  const result: string[] = [];
-  const pool = shuffleArray(pooled.map((char) => char.toLowerCase()));
-
-  for (const letter of pool) {
+  const needed = word.toLowerCase().split("");
+  const confusableLetters = confusables.join("").toLowerCase().split("");
+  
+  // ALWAYS include all needed letters first (this was the bug - they could get cut off)
+  const result: string[] = [...needed];
+  
+  // Add distractor letters from confusables + random alphabet letters
+  const distractors = shuffleArray([...confusableLetters, ...ALPHABET]);
+  
+  for (const letter of distractors) {
+    // Add if we don't already have it (or need duplicates)
     const currentCount = result.filter((x) => x === letter).length;
-    const minNeeded = counts[letter] ?? 0;
-    if (currentCount < Math.max(minNeeded, 1)) {
-      result.push(letter);
+    const neededCount = needed.filter((x) => x === letter).length;
+    if (currentCount < Math.max(neededCount, 1) || (!result.includes(letter) && result.length < 12)) {
+      if (result.length < 12) {
+        result.push(letter);
+      }
     }
     if (result.length >= 12) break;
   }
