@@ -54,3 +54,24 @@ Guidance for anyone (human or AI) dropping in to build or adjust these web toys.
 - NEVER stop before pushing - that leaves work stranded locally
 - NEVER say "ready to push when you are" - YOU must push
 - If push fails, resolve and retry until it succeeds
+
+---
+
+## Session Log
+
+### 2026-03-22 (Kimchi)
+
+**Added:** Sight Words game for Nora
+- `src/app/sight-words/page.tsx` — main game component
+- `src/data/sight-words.ts` — word bank with confusable pairs
+- Registered in `src/lib/toys.ts`
+- Scoring: +1 correct, -1 wrong, target goal with confetti celebration
+- Settings: 2-4 choices, 3-20 target points, category filter
+
+**In Progress:**
+- `artifacts-bkw`: Generating word images via nano-banana-pro
+- UI polish: sound effects, keyboard nav, word display above image
+
+**Next:**
+- Wire up actual images once generated (update WordImage component to use `/sight-words/[word].png`)
+- Consider adding difficulty progression (start with 2 choices, increase after streaks)
