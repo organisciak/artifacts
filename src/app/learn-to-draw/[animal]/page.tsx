@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import NextImage from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -303,7 +303,7 @@ export default function LearnToDrawLessonPage() {
             <div className="h-full rounded-3xl bg-white p-4 shadow-xl border border-blue-100 space-y-3">
               <h2 className="text-2xl font-black text-slate-800">Steps</h2>
               <div className="relative rounded-2xl border-4 border-blue-200 bg-white overflow-hidden">
-                <Image
+                <NextImage
                   src={lesson.stepImage(step)}
                   alt={`${lesson.name} drawing step ${step}`}
                   width={1024}
