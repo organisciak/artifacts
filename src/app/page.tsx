@@ -1,10 +1,45 @@
 import { Toy, toys } from '@/lib/toys';
 import { ToyCard } from '@/components/ui/toy-card';
 import { Footer } from '@/components/ui/footer';
+import Link from 'next/link';
 
 export default function Home() {
+  const inProgressToys = toys.filter(t => t.inProgress);
+
   return (
     <main className="container mx-auto p-4 space-y-8">
+      {inProgressToys.length > 0 && (
+        <div className="rounded-2xl bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-100 p-4 space-y-3">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl animate-swim">🐟</span>
+            <h2 className="text-lg font-semibold text-blue-800">In Progress</h2>
+          </div>
+          <ul className="space-y-2">
+            {inProgressToys.map(toy => (
+              <li key={toy.id} className="flex items-center gap-2 text-blue-900">
+                <span className="text-blue-400">○</span>
+                <Link href={toy.path} className="hover:underline font-medium">{toy.name}</Link>
+                {toy.progressNote && (
+                  <span className="text-sm text-blue-600">— {toy.progressNote}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+          <style jsx>{`
+            @keyframes swim {
+              0%, 100% { transform: translateX(0) scaleX(1); }
+              25% { transform: translateX(4px) scaleX(1); }
+              50% { transform: translateX(8px) scaleX(1); }
+              75% { transform: translateX(4px) scaleX(1); }
+            }
+            .animate-swim {
+              display: inline-block;
+              animation: swim 3s ease-in-out infinite;
+            }
+          `}</style>
+        </div>
+      )}
+
       <div className="space-y-4">
         <h1 className="text-5xl font-bold italic font-eb-garamond">etc</h1>
         <p className="text-lg text-muted-foreground font-eb-garamond">

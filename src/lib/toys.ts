@@ -7,6 +7,8 @@ export type Toy = {
   category: string;
   tags: string[];
   backgroundImage?: string;
+  inProgress?: boolean;
+  progressNote?: string;
 };
 
 export const toys: Toy[] = [
@@ -73,11 +75,13 @@ export const toys: Toy[] = [
   {
     id: 'fish-game',
     name: 'Fish Game',
-    description: 'A big fish/little fish game using the angle of your phone to navigate (in-progress)',
+    description: 'A big fish/little fish game using the angle of your phone to navigate',
     iconName: 'Fish',
     path: '/games/fish',
     category: 'Games',
     tags: ['Canvas', 'Animation', 'Interactive', 'Accelerometer'],
+    inProgress: true,
+    progressNote: 'Accelerometer controls',
   },
   {
     id: 'indigo-frequency',
