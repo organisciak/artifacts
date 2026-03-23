@@ -153,13 +153,13 @@ export default function LearnToDrawLessonPage() {
   }, [lesson]);
 
   useEffect(() => {
-    if (!lesson) return;
+    if (!lesson || !mounted) return;
 
     setupCanvas();
     const onResize = () => setupCanvas();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
-  }, [lesson, setupCanvas]);
+  }, [lesson, mounted, setupCanvas]);
 
   useEffect(() => {
     if (!lesson) return;
@@ -173,6 +173,8 @@ export default function LearnToDrawLessonPage() {
   }, [autoPlay, lesson]);
 
   useEffect(() => {
+    if (!mounted) return;
+    
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -225,7 +227,7 @@ export default function LearnToDrawLessonPage() {
       canvas.removeEventListener("pointerup", onPointerUp);
       canvas.removeEventListener("pointercancel", onPointerUp);
     };
-  }, [getCanvasPoint]);
+  }, [mounted, getCanvasPoint]);
 
   if (!lesson) {
     return (
