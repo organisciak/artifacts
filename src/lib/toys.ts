@@ -1,0 +1,149 @@
+export type Toy = {
+  id: string;
+  name: string;
+  description: string;
+  iconName: string;
+  path: string;
+  category: string;
+  tags: string[];
+  backgroundImage?: string;
+};
+
+export const toys: Toy[] = [
+  {
+    id: 'touch-synth',
+    name: 'Touch Synthesizer',
+    description: 'An expressive multi-touch theremin with visual feedback',
+    iconName: 'Music',
+    path: '/touch-synth',
+    category: 'Audio',
+    tags: ['Web Audio API', 'Touch Events'],
+    backgroundImage: '/images/theremin2.png',
+  },
+  {
+    id: 'ball-physics',
+    name: 'Ball Bloops',
+    description: 'An accelerometer-based demo with balls that interactsynthesized blips',
+    iconName: 'Volleyball',
+    path: '/ball-physics',
+    category: 'Audio',
+    backgroundImage: '/images/bloops.png',
+    tags: ['Accelerometer', 'Canvas', 'Hit Detection', 'Web Audio API'],
+  },
+  {
+    id: 'touch-drum-synth',
+    name: 'Touch Drum Synth',
+    description: 'A drum synth with touch events',
+    iconName: 'Drum',
+    path: '/touch-drum-synth',
+    category: 'Audio',
+    backgroundImage: '/images/pads.png',
+    tags: ['Touch Events', 'Web Audio API'],
+  },
+  {
+    id: 'music-viz2',
+    name: 'Candy Warp Viz',
+    description: 'Endless music-reactive color warp',
+    iconName: 'Music',
+    path: '/music-viz2',
+    category: 'Audio',
+    backgroundImage: '/bg-videos/ring-music-viz.mp4',
+    tags: ['Three.js', 'Web Audio API', 'Generative Art'],
+  },
+  {
+    id: 'music-viz',
+    name: 'Mountain Pulse',
+    description: '3D wireframe mountain that pulses and morphs with audio',
+    iconName: 'Mountain',
+    path: '/music-viz',
+    category: 'Audio',
+    tags: ['Three.js', 'Web Audio API', 'Generative Art'],
+    backgroundImage: '/bg-videos/mtn-viz.mp4'
+  },
+  {
+    id: 'meditative-fractals',
+    name: 'Fractals',
+    description: '',
+    iconName: 'Flower',
+    path: '/geom/easy-fractals',
+    category: 'Geometric',
+    tags: ['SVG', 'Animation', 'Interactive'],
+    backgroundImage: '/bg-videos/mfractals.mp4'
+  },
+  {
+    id: 'fish-game',
+    name: 'Fish Game',
+    description: 'A big fish/little fish game using the angle of your phone to navigate (in-progress)',
+    iconName: 'Fish',
+    path: '/games/fish',
+    category: 'Games',
+    tags: ['Canvas', 'Animation', 'Interactive', 'Accelerometer'],
+  },
+  {
+    id: 'indigo-frequency',
+    name: 'The Indigo Frequency',
+    description: 'A meditative wireframe world in pearlescent indigo',
+    iconName: 'Radio',
+    path: '/indigo',
+    category: 'Games',
+    tags: ['Three.js', 'Post-processing', 'Interactive', 'Atmospheric'],
+  },
+  {
+    id: 'bauhaus-pattern',
+    name: 'Bauhaus',
+    description: '',
+    iconName: 'Pyramid',
+    path: '/geom/bauhaus',
+    category: 'Geometric',
+    tags: ['SVG', 'Animation', 'Interactive', 'Generative Art'],
+    backgroundImage: '/bg-videos/bauhaus.mp4',
+  },
+  {
+    id: 'fabric-flow',
+    name: 'Fabric Flow',
+    description: '',
+    iconName: 'Waves',
+    path: '/geom/fabric',
+    category: 'Geometric',
+    tags: ['SVG', 'Animation', 'Interactive', 'Generative Art'],
+    backgroundImage: '/bg-videos/fabric.mp4',
+  },
+  {
+    id: 'icon-generator',
+    name: 'Icon Generator',
+    description: 'Generate consistent emoji icons from text for prototyping and placeholders',
+    iconName: 'Image',
+    path: '/icon',
+    category: 'Utilities',
+    tags: ['SVG', 'Generative Art', 'API'],
+    backgroundImage: '/icon/icon-generator',
+  },
+  {
+    id: 'data-tool',
+    name: 'CSV Data Tool',
+    description: 'Transform, clean, and analyze CSV data with filtering, sorting, grouping, and anonymization features',
+    iconName: 'Table',
+    path: '/data-tool',
+    category: 'Utilities',
+    tags: ['CSV', 'Data Processing', 'Anonymization', 'Analytics'],
+    // backgroundImage: '/images/data-tool.png',
+  },
+  {
+    id: 'sight-words',
+    name: 'Sight Words',
+    description: 'Help Nora practice sight reading with fun word matching games',
+    iconName: 'BookOpen',
+    path: '/sight-words',
+    category: 'Games',
+    tags: ['Education', 'Reading', 'Kids', 'Interactive'],
+  },
+  /*{
+    id: 'pointer-lock',
+    name: 'Pointer Lock',
+    description: 'A pointer lock demo',
+    iconName: 'Pointer',
+    path: '/sm/pointer-lock',
+    category: 'Crumbs',
+    tags: ['Pointer Lock'],
+  }*/
+];

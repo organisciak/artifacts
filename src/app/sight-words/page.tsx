@@ -1,0 +1,374 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import {
+  generateRound,
+  GameRound,
+  wordGroups,
+  shuffleArray,
+} from "@/data/sight-words";
+import confetti from "canvas-confetti";
+
+type GameState = "menu" | "playing" | "celebration";
+
+export default function SightWordsPage() {
+  const [gameState, setGameState] = useState<GameState>("menu");
+  const [score, setScore] = useState(0);
+  const [targetScore, setTargetScore] = useState(5);
+  const [optionCount, setOptionCount] = useState(3);
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(
+    undefined
+  );
+  const [currentRound, setCurrentRound] = useState<GameRound | null>(null);
+  const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
+  const startGame = useCallback(() => {
+    setScore(0);
+    setGameState("playing");
+    setCurrentRound(generateRound(optionCount, selectedCategory));
+    setFeedback(null);
+    setSelectedIndex(null);
+  }, [optionCount, selectedCategory]);
+
+  const nextRound = useCallback(() => {
+    setCurrentRound(generateRound(optionCount, selectedCategory));
+    setFeedback(null);
+    setSelectedIndex(null);
+  }, [optionCount, selectedCategory]);
+
+  const handleChoice = useCallback(
+    (index: number) => {
+      if (feedback !== null || !currentRound) return;
+
+      setSelectedIndex(index);
+
+      if (index === currentRound.correctIndex) {
+        setFeedback("correct");
+        const newScore = score + 1;
+        setScore(newScore);
+
+        if (newScore >= targetScore) {
+          // Celebration!
+          setTimeout(() => {
+            setGameState("celebration");
+            // Fire confetti
+            confetti({
+              particleCount: 100,
+              spread: 70,
+              origin: { y: 0.6 },
+            });
+            setTimeout(() => {
+              confetti({
+                particleCount: 50,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 },
+              });
+              confetti({
+                particleCount: 50,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 },
+              });
+            }, 200);
+          }, 800);
+        } else {
+          setTimeout(nextRound, 1000);
+        }
+      } else {
+        setFeedback("wrong");
+        setScore(Math.max(0, score - 1));
+        setTimeout(() => {
+          setFeedback(null);
+          setSelectedIndex(null);
+        }, 1200);
+      }
+    },
+    [feedback, currentRound, score, targetScore, nextRound]
+  );
+
+  // Placeholder image component (will be replaced with pre-generated images)
+  const WordImage = ({
+    word,
+    size = "large",
+  }: {
+    word: string;
+    size?: "large" | "small";
+  }) => {
+    const sizeClass = size === "large" ? "w-48 h-48" : "w-24 h-24";
+    // For now, use a colored box with the first letter
+    // These will be replaced with actual images
+    const colors = [
+      "bg-red-400",
+      "bg-blue-400",
+      "bg-green-400",
+      "bg-yellow-400",
+      "bg-purple-400",
+      "bg-pink-400",
+      "bg-orange-400",
+      "bg-teal-400",
+    ];
+    const colorIndex =
+      word.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) %
+      colors.length;
+
+    return (
+      <div
+        className={`${sizeClass} ${colors[colorIndex]} rounded-2xl flex items-center justify-center shadow-lg border-4 border-white`}
+      >
+        <span className="text-6xl font-bold text-white drop-shadow-md">
+          {word.charAt(0).toUpperCase()}
+        </span>
+      </div>
+    );
+  };
+
+  // Menu screen
+  if (gameState === "menu") {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-sky-300 to-sky-500 flex flex-col items-center justify-center p-4">
+        <h1 className="text-5xl font-bold text-white mb-8 drop-shadow-lg">
+          🌟 Sight Words 🌟
+        </h1>
+
+        <div className="bg-white/90 rounded-3xl p-6 w-full max-w-md shadow-xl space-y-6">
+          {/* Target score */}
+          <div>
+            <label className="block text-lg font-semibold text-gray-700 mb-2">
+              Points to win: {targetScore}
+            </label>
+            <input
+              type="range"
+              min={3}
+              max={20}
+              value={targetScore}
+              onChange={(e) => setTargetScore(Number(e.target.value))}
+              className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-500"
+            />
+            <div className="flex justify-between text-sm text-gray-500">
+              <span>3</span>
+              <span>20</span>
+            </div>
+          </div>
+
+          {/* Option count */}
+          <div>
+            <label className="block text-lg font-semibold text-gray-700 mb-2">
+              Choices per round: {optionCount}
+            </label>
+            <div className="flex gap-2">
+              {[2, 3, 4].map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setOptionCount(n)}
+                  className={`flex-1 py-3 rounded-xl text-lg font-bold transition-all ${
+                    optionCount === n
+                      ? "bg-blue-500 text-white scale-105 shadow-md"
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Category */}
+          <div>
+            <label className="block text-lg font-semibold text-gray-700 mb-2">
+              Word category
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setSelectedCategory(undefined)}
+                className={`py-3 px-4 rounded-xl text-sm font-bold transition-all ${
+                  selectedCategory === undefined
+                    ? "bg-purple-500 text-white scale-105 shadow-md"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                All Words
+              </button>
+              {wordGroups.map((group) => {
+                const cat = group.words[0]?.category;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`py-3 px-4 rounded-xl text-sm font-bold transition-all ${
+                      selectedCategory === cat
+                        ? "bg-purple-500 text-white scale-105 shadow-md"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
+                  >
+                    {group.name.split(" ")[0]}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Start button */}
+          <button
+            onClick={startGame}
+            className="w-full py-4 bg-green-500 hover:bg-green-600 text-white text-2xl font-bold rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95"
+          >
+            🎮 Start Game!
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Celebration screen
+  if (gameState === "celebration") {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-yellow-300 via-pink-300 to-purple-400 flex flex-col items-center justify-center p-4">
+        <div className="text-center animate-bounce">
+          <div className="text-8xl mb-4">🎉</div>
+          <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
+            Amazing!
+          </h1>
+          <p className="text-2xl text-white/90 mb-8 drop-shadow">
+            You got {targetScore} points!
+          </p>
+          <div className="text-6xl mb-8">🌟⭐🌟</div>
+          <p className="text-xl text-white/80 mb-8">
+            Time for your prize! 🎁
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-4 w-full max-w-xs">
+          <button
+            onClick={startGame}
+            className="w-full py-4 bg-green-500 hover:bg-green-600 text-white text-xl font-bold rounded-2xl shadow-lg transition-all hover:scale-105"
+          >
+            🔄 Play Again
+          </button>
+          <button
+            onClick={() => setGameState("menu")}
+            className="w-full py-3 bg-white/80 hover:bg-white text-gray-700 text-lg font-bold rounded-2xl shadow-lg transition-all"
+          >
+            ⚙️ Settings
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Playing screen
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-sky-300 to-sky-500 flex flex-col p-4">
+      {/* Score header */}
+      <div className="flex justify-between items-center mb-4">
+        <button
+          onClick={() => setGameState("menu")}
+          className="p-2 bg-white/80 rounded-full shadow"
+        >
+          ⚙️
+        </button>
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">⭐</span>
+          <div className="bg-white/90 rounded-full px-4 py-2 shadow">
+            <span className="text-2xl font-bold text-gray-700">
+              {score} / {targetScore}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div className="w-full bg-white/30 rounded-full h-4 mb-6 overflow-hidden">
+        <div
+          className="bg-yellow-400 h-full rounded-full transition-all duration-500 shadow-inner"
+          style={{ width: `${(score / targetScore) * 100}%` }}
+        />
+      </div>
+
+      {/* Main game area */}
+      {currentRound && (
+        <div className="flex-1 flex flex-col items-center justify-center gap-8">
+          {/* Target word/image display */}
+          <div className="text-center">
+            <p className="text-white text-lg mb-4 drop-shadow">
+              Which word is this?
+            </p>
+            <WordImage word={currentRound.targetWord.word} size="large" />
+          </div>
+
+          {/* Options */}
+          <div
+            className={`grid gap-3 w-full max-w-md ${
+              currentRound.options.length === 2 ? "grid-cols-2" : ""
+            } ${currentRound.options.length === 3 ? "grid-cols-3" : ""} ${
+              currentRound.options.length === 4 ? "grid-cols-2" : ""
+            }`}
+          >
+            {currentRound.options.map((option, index) => {
+              let buttonClass =
+                "bg-white hover:bg-gray-50 text-gray-800 border-4 border-gray-200";
+
+              if (selectedIndex === index) {
+                if (feedback === "correct") {
+                  buttonClass =
+                    "bg-green-400 text-white border-4 border-green-500 scale-105";
+                } else if (feedback === "wrong") {
+                  buttonClass =
+                    "bg-red-400 text-white border-4 border-red-500 shake";
+                }
+              } else if (
+                feedback === "wrong" &&
+                index === currentRound.correctIndex
+              ) {
+                // Highlight correct answer when wrong
+                buttonClass =
+                  "bg-green-200 text-green-800 border-4 border-green-400";
+              }
+
+              return (
+                <button
+                  key={index}
+                  onClick={() => handleChoice(index)}
+                  disabled={feedback !== null}
+                  className={`py-6 px-4 rounded-2xl text-3xl font-bold shadow-lg transition-all ${buttonClass}`}
+                >
+                  {option}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Feedback */}
+          {feedback && (
+            <div
+              className={`text-4xl ${feedback === "correct" ? "animate-bounce" : "animate-pulse"}`}
+            >
+              {feedback === "correct" ? "✅ Great!" : "❌ Try again!"}
+            </div>
+          )}
+        </div>
+      )}
+
+      <style jsx>{`
+        @keyframes shake {
+          0%,
+          100% {
+            transform: translateX(0);
+          }
+          20%,
+          60% {
+            transform: translateX(-5px);
+          }
+          40%,
+          80% {
+            transform: translateX(5px);
+          }
+        }
+        .shake {
+          animation: shake 0.5s ease-in-out;
+        }
+      `}</style>
+    </div>
+  );
+}
