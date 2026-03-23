@@ -22,6 +22,7 @@ export default function LearnToDrawLessonPage() {
   const drawingRef = useRef(false);
   const pointerIdRef = useRef<number | null>(null);
 
+  const [mounted, setMounted] = useState(false);
   const [step, setStep] = useState(lesson?.steps ?? 1);
   const [stepOpacity, setStepOpacity] = useState(1);
   const [hand, setHand] = useState<HandPreference | null>(null);
@@ -114,10 +115,10 @@ export default function LearnToDrawLessonPage() {
     if (savedHand === "left" || savedHand === "right") {
       setHand(savedHand);
       setShowHandPrompt(false);
-      return;
+    } else {
+      setShowHandPrompt(true);
     }
-
-    setShowHandPrompt(true);
+    setMounted(true);
   }, [lesson]);
 
   useEffect(() => {
@@ -235,6 +236,14 @@ export default function LearnToDrawLessonPage() {
             Back to gallery
           </Link>
         </div>
+      </main>
+    );
+  }
+
+  if (!mounted) {
+    return (
+      <main className="min-h-screen bg-gradient-to-b from-blue-100 via-cyan-100 to-teal-100 p-3 sm:p-5 flex items-center justify-center">
+        <div className="text-2xl font-bold text-blue-700">Loading...</div>
       </main>
     );
   }
