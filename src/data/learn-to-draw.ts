@@ -14,6 +14,41 @@ export const lessons: LearnToDrawLesson[] = [
     preview: "/learn-to-draw/penguin/penguin-v2-step4.png",
     stepImage: (step: number) => `/learn-to-draw/penguin/penguin-v2-step${step}.png`,
   },
+  {
+    id: "cat",
+    name: "Cat",
+    steps: 4,
+    preview: "/learn-to-draw/cat/step4.png",
+    stepImage: (step: number) => `/learn-to-draw/cat/step${step}.png`,
+  },
+  {
+    id: "owl",
+    name: "Owl",
+    steps: 4,
+    preview: "/learn-to-draw/owl/step4.png",
+    stepImage: (step: number) => `/learn-to-draw/owl/step${step}.png`,
+  },
+  {
+    id: "dragon",
+    name: "Dragon",
+    steps: 4,
+    preview: "/learn-to-draw/dragon/step4.png",
+    stepImage: (step: number) => `/learn-to-draw/dragon/step${step}.png`,
+  },
+  {
+    id: "fish",
+    name: "Fish",
+    steps: 4,
+    preview: "/learn-to-draw/fish/step4.png",
+    stepImage: (step: number) => `/learn-to-draw/fish/step${step}.png`,
+  },
+  {
+    id: "unicorn",
+    name: "Unicorn",
+    steps: 4,
+    preview: "/learn-to-draw/unicorn/step4.png",
+    stepImage: (step: number) => `/learn-to-draw/unicorn/step${step}.png`,
+  },
 ];
 
 export const HAND_PREFERENCE_KEY = "learn-to-draw:hand";
