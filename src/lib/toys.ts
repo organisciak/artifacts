@@ -137,6 +137,15 @@ export const toys: Toy[] = [
     category: 'Games',
     tags: ['Education', 'Reading', 'Kids', 'Interactive'],
   },
+  {
+    id: 'spelling-practice',
+    name: 'Handwriting Spelling Practice',
+    description: 'Look-cover-write-check spelling with drawing, letter checks, and celebration',
+    iconName: 'PencilLine',
+    path: '/spelling-practice',
+    category: 'Games',
+    tags: ['Education', 'Spelling', 'Kids', 'Touch', 'Canvas'],
+  },
   /*{
     id: 'pointer-lock',
     name: 'Pointer Lock',
