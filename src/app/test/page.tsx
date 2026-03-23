@@ -52,7 +52,7 @@ const ImageFrameAnimator = () => {
     const frameHeight = img.height / rows;
     const frames = [];
     
-    let totalFrameCount = rows * columns;
+    const totalFrameCount = rows * columns;
     setTotalFrames(totalFrameCount);
     
     for (let row = 0; row < rows; row++) {
