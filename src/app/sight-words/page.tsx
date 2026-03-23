@@ -11,6 +11,35 @@ import confetti from "canvas-confetti";
 
 type GameState = "menu" | "playing" | "celebration";
 
+function playSound(type: "correct" | "wrong") {
+  const ctx = new AudioContext();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  if (type === "correct") {
+    // Cheerful ascending ding
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(523, ctx.currentTime); // C5
+    osc.frequency.setValueAtTime(659, ctx.currentTime + 0.1); // E5
+    osc.frequency.setValueAtTime(784, ctx.currentTime + 0.2); // G5
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.4);
+  } else {
+    // Gentle low bonk
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(200, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.25, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.3);
+  }
+}
+
 export default function SightWordsPage() {
   const [gameState, setGameState] = useState<GameState>("menu");
   const [score, setScore] = useState(0);
@@ -44,6 +73,7 @@ export default function SightWordsPage() {
       setSelectedIndex(index);
 
       if (index === currentRound.correctIndex) {
+        playSound("correct");
         setFeedback("correct");
         const newScore = score + 1;
         setScore(newScore);
@@ -77,6 +107,7 @@ export default function SightWordsPage() {
           setTimeout(nextRound, 1000);
         }
       } else {
+        playSound("wrong");
         setFeedback("wrong");
         setScore(Math.max(0, score - 1));
         setTimeout(() => {
@@ -87,6 +118,19 @@ export default function SightWordsPage() {
     },
     [feedback, currentRound, score, targetScore, nextRound]
   );
+
+  // Keyboard support: 1-4 keys select options
+  useEffect(() => {
+    if (gameState !== "playing") return;
+    const handler = (e: KeyboardEvent) => {
+      const num = parseInt(e.key);
+      if (num >= 1 && num <= (currentRound?.options.length ?? 0)) {
+        handleChoice(num - 1);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [gameState, currentRound, handleChoice]);
 
   // Placeholder image component (will be replaced with pre-generated images)
   const WordImage = ({
@@ -291,8 +335,11 @@ export default function SightWordsPage() {
         <div className="flex-1 flex flex-col items-center justify-center gap-8">
           {/* Target word/image display */}
           <div className="text-center">
-            <p className="text-white text-lg mb-4 drop-shadow">
+            <p className="text-white text-lg mb-2 drop-shadow">
               Which word is this?
+            </p>
+            <p className="text-5xl font-bold text-white mb-4 drop-shadow-lg tracking-wide">
+              {currentRound.targetWord.word}
             </p>
             <WordImage word={currentRound.targetWord.word} size="large" />
           </div>
@@ -326,13 +373,21 @@ export default function SightWordsPage() {
                   "bg-green-200 text-green-800 border-4 border-green-400";
               }
 
+              const pulseClass =
+                selectedIndex === index && feedback
+                  ? feedback === "correct"
+                    ? "animate-pulse"
+                    : ""
+                  : "";
+
               return (
                 <button
                   key={index}
                   onClick={() => handleChoice(index)}
                   disabled={feedback !== null}
-                  className={`py-6 px-4 rounded-2xl text-3xl font-bold shadow-lg transition-all ${buttonClass}`}
+                  className={`py-6 px-4 rounded-2xl text-3xl font-bold shadow-lg transition-all ${buttonClass} ${pulseClass}`}
                 >
+                  <span className="text-xs opacity-50 block mb-1">{index + 1}</span>
                   {option}
                 </button>
               );
