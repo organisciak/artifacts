@@ -1,7 +1,7 @@
 "use client";
 
 import confetti from "canvas-confetti";
-import { Caveat } from "next/font/google";
+import { Caveat, Dancing_Script } from "next/font/google";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 type SortItem = {
@@ -17,7 +17,7 @@ type CategoryConfig = {
   items: SortItem[];
 };
 
-type BucketFontStyle = "print" | "cursive";
+type BucketFontStyle = "print" | "handwriting" | "cursive";
 type BucketLetterCase = "upper" | "lower";
 
 type DragState = {
@@ -30,6 +30,7 @@ type DragState = {
 };
 
 const caveat = Caveat({ subsets: ["latin"], weight: ["700"] });
+const dancingScript = Dancing_Script({ subsets: ["latin"], weight: ["700"] });
 
 const CATEGORIES: Record<CategoryId, CategoryConfig> = {
   animals: {
@@ -173,7 +174,7 @@ export default function AnimalSortPage() {
   const [categoryId, setCategoryId] = useState<CategoryId>("animals");
   const [showSettings, setShowSettings] = useState(false);
   const [bucketFontStyle, setBucketFontStyle] = useState<BucketFontStyle>("print");
-  const [bucketLetterCase, setBucketLetterCase] = useState<BucketLetterCase>("upper");
+  const [bucketLetterCase, setBucketLetterCase] = useState<BucketLetterCase>("lower");
 
   const [roundItems, setRoundItems] = useState<SortItem[]>([]);
   const [firstSorted, setFirstSorted] = useState<Set<string>>(new Set());
@@ -195,7 +196,7 @@ export default function AnimalSortPage() {
     const savedCase = window.localStorage.getItem(STORAGE_KEYS.letterCase);
     const savedCategory = window.localStorage.getItem(STORAGE_KEYS.category);
 
-    if (savedStyle === "print" || savedStyle === "cursive") {
+    if (savedStyle === "print" || savedStyle === "handwriting" || savedStyle === "cursive") {
       setBucketFontStyle(savedStyle);
     }
 
@@ -377,8 +378,10 @@ export default function AnimalSortPage() {
 
   const bucketLetterClass =
     bucketFontStyle === "cursive"
-      ? `${caveat.className} text-3xl font-bold tracking-wide text-slate-800`
-      : "text-2xl font-black text-slate-800";
+      ? `${dancingScript.className} text-3xl font-bold tracking-wide text-slate-800`
+      : bucketFontStyle === "handwriting"
+        ? `${caveat.className} text-3xl font-bold tracking-wide text-slate-800`
+        : "text-2xl font-black text-slate-800";
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-amber-100 via-sky-100 to-indigo-100 p-4 pb-8">
@@ -439,6 +442,7 @@ export default function AnimalSortPage() {
                     className="rounded-xl border border-slate-300 bg-white px-2 py-2"
                   >
                     <option value="print">Print</option>
+                    <option value="handwriting">Handwriting</option>
                     <option value="cursive">Cursive</option>
                   </select>
                 </label>
@@ -536,10 +540,8 @@ export default function AnimalSortPage() {
                     aria-label={`Drag ${item.name}`}
                   >
                     <div className="text-4xl">{item.emoji}</div>
-                    {showLabel ? (
+                    {showLabel && (
                       <div className="mt-1 text-base font-bold text-slate-800">{item.name}</div>
-                    ) : (
-                      <div className="mt-2 text-[11px] font-semibold text-slate-400">Try without words first</div>
                     )}
                   </button>
                 );
@@ -604,10 +606,6 @@ export default function AnimalSortPage() {
 
                   {sortedByBucket.length > 8 && (
                     <div className="text-[10px] font-semibold text-slate-500">+{sortedByBucket.length - 8}</div>
-                  )}
-
-                  {!drillLetter && sortedByBucket.length > 0 && (
-                    <div className="text-[10px] font-semibold text-slate-500">{sortedByBucket.length} sorted</div>
                   )}
 
                   {canDrill && (
