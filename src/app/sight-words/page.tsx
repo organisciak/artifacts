@@ -132,7 +132,7 @@ export default function SightWordsPage() {
     return () => window.removeEventListener("keydown", handler);
   }, [gameState, currentRound, handleChoice]);
 
-  // Placeholder image component (will be replaced with pre-generated images)
+  // Word image component - uses pre-generated images from nano-banana-pro
   const WordImage = ({
     word,
     size = "large",
@@ -141,30 +141,26 @@ export default function SightWordsPage() {
     size?: "large" | "small";
   }) => {
     const sizeClass = size === "large" ? "w-48 h-48" : "w-24 h-24";
-    // For now, use a colored box with the first letter
-    // These will be replaced with actual images
-    const colors = [
-      "bg-red-400",
-      "bg-blue-400",
-      "bg-green-400",
-      "bg-yellow-400",
-      "bg-purple-400",
-      "bg-pink-400",
-      "bg-orange-400",
-      "bg-teal-400",
-    ];
-    const colorIndex =
-      word.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) %
-      colors.length;
+    const imgSrc = `/sight-words/${word}.png`;
 
     return (
-      <div
-        className={`${sizeClass} ${colors[colorIndex]} rounded-2xl flex items-center justify-center shadow-lg border-4 border-white`}
-      >
-        <span className="text-6xl font-bold text-white drop-shadow-md">
-          {word.charAt(0).toUpperCase()}
-        </span>
-      </div>
+      <img
+        src={imgSrc}
+        alt={word}
+        className={`${sizeClass} rounded-2xl shadow-lg border-4 border-white object-cover bg-white`}
+        onError={(e) => {
+          // Fallback to colored placeholder if image missing
+          const target = e.target as HTMLImageElement;
+          target.style.display = "none";
+          const parent = target.parentElement;
+          if (parent) {
+            const fallback = document.createElement("div");
+            fallback.className = `${sizeClass} bg-purple-400 rounded-2xl flex items-center justify-center shadow-lg border-4 border-white`;
+            fallback.innerHTML = `<span class="text-6xl font-bold text-white drop-shadow-md">${word.charAt(0).toUpperCase()}</span>`;
+            parent.appendChild(fallback);
+          }
+        }}
+      />
     );
   };
 
