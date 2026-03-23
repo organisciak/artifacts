@@ -140,6 +140,8 @@ export const toys: Toy[] = [
     path: '/sight-words',
     category: 'Games',
     tags: ['Education', 'Reading', 'Kids', 'Interactive'],
+    inProgress: true,
+    progressNote: 'Same-start difficulty mode, custom rewards, better sounds',
   },
   {
     id: 'spelling-practice',
