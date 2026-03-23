@@ -155,6 +155,16 @@ export const toys: Toy[] = [
     category: 'Games',
     tags: ['Education', 'Kids', 'Drag and Drop', 'Touch Friendly'],
   },
+  {
+    id: 'learn-to-draw',
+    name: 'Learn to Draw',
+    description: 'Follow easy animal drawing steps and save your own creations',
+    iconName: 'Palette',
+    path: '/learn-to-draw',
+    category: 'Games',
+    tags: ['Education', 'Drawing', 'Kids', 'Canvas', 'Touch Friendly'],
+    backgroundImage: '/learn-to-draw/penguin/penguin-v2-step4.png',
+  },
   /*{
     id: 'pointer-lock',
     name: 'Pointer Lock',
