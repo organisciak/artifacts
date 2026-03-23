@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { Toy } from '@/lib/toys';
-import { Music, Drum, Waves, Activity, Volleyball,
+import {
+  Music, Drum, Waves, Activity, Volleyball,
   Image, Table, Mountain,
-  Pointer, Flower, Fish, Pyramid, Radio, BookOpen, PencilLine, Palette } from 'lucide-react';
+  Pointer, Flower, Fish, Pyramid, Radio, BookOpen, PencilLine, Palette
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const IconMap = {

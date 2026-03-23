@@ -20,7 +20,7 @@ export default function Home() {
                 <span className="text-blue-400">○</span>
                 <Link href={toy.path} className="hover:underline font-medium">{toy.name}</Link>
                 {toy.progressNote && (
-                  <span className="text-sm text-blue-600">— {toy.progressNote}</span>
+                  <span className="text-sm text-blue-600">- {toy.progressNote}</span>
                 )}
               </li>
             ))}
