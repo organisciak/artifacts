@@ -11,7 +11,7 @@ export default function Home() {
       {inProgressToys.length > 0 && (
         <div className="rounded-2xl bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-100 p-4 space-y-3">
           <div className="flex items-center gap-3">
-            <span className="text-2xl animate-swim">🐟</span>
+            <span className="text-2xl animate-bounce">🐟</span>
             <h2 className="text-lg font-semibold text-blue-800">In Progress</h2>
           </div>
           <ul className="space-y-2">
@@ -25,18 +25,6 @@ export default function Home() {
               </li>
             ))}
           </ul>
-          <style jsx>{`
-            @keyframes swim {
-              0%, 100% { transform: translateX(0) scaleX(1); }
-              25% { transform: translateX(4px) scaleX(1); }
-              50% { transform: translateX(8px) scaleX(1); }
-              75% { transform: translateX(4px) scaleX(1); }
-            }
-            .animate-swim {
-              display: inline-block;
-              animation: swim 3s ease-in-out infinite;
-            }
-          `}</style>
         </div>
       )}
 
