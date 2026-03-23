@@ -137,6 +137,15 @@ export const toys: Toy[] = [
     category: 'Games',
     tags: ['Education', 'Reading', 'Kids', 'Interactive'],
   },
+  {
+    id: 'animal-sort',
+    name: 'Animal Letter Sorting',
+    description: 'Drag animals into first-letter buckets, then try second-letter bonus rounds',
+    iconName: 'Fish',
+    path: '/animal-sort',
+    category: 'Games',
+    tags: ['Education', 'Kids', 'Drag and Drop', 'Touch Friendly'],
+  },
   /*{
     id: 'pointer-lock',
     name: 'Pointer Lock',
