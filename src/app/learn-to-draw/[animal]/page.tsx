@@ -29,6 +29,7 @@ export default function LearnToDrawLessonPage() {
   const [hand, setHand] = useState<HandPreference | null>(null);
   const [showHandPrompt, setShowHandPrompt] = useState(false);
   const [hasInk, setHasInk] = useState(false);
+  const hasInkRef = useRef(false);
   const [autoPlay, setAutoPlay] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
@@ -68,6 +69,7 @@ export default function LearnToDrawLessonPage() {
           ctx.fillStyle = "#ffffff";
           ctx.fillRect(0, 0, width, height);
           ctx.drawImage(image, 0, 0, width, height);
+          hasInkRef.current = true;
           setHasInk(true);
         };
         image.src = saved;
@@ -87,6 +89,7 @@ export default function LearnToDrawLessonPage() {
 
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, width, height);
+    hasInkRef.current = false;
     setHasInk(false);
     setSaveMessage(null);
   }, []);
@@ -200,7 +203,7 @@ export default function LearnToDrawLessonPage() {
       const point = getCanvasPoint(e);
       if (!point) return;
 
-      setHasInk(true);
+      hasInkRef.current = true;
       ctx.lineTo(point.x, point.y);
       ctx.stroke();
     };
@@ -211,6 +214,9 @@ export default function LearnToDrawLessonPage() {
       drawingRef.current = false;
       pointerIdRef.current = null;
       ctx.closePath();
+
+      // Sync ink state to React only once per stroke, not per move
+      if (hasInkRef.current) setHasInk(true);
 
       if (canvas.hasPointerCapture(e.pointerId)) {
         canvas.releasePointerCapture(e.pointerId);

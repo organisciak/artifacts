@@ -99,6 +99,8 @@ export default function SpellingPracticePage() {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const drawingRef = useRef(false);
   const pointerIdRef = useRef<number | null>(null);
+  const canvasSnapshotRef = useRef<string | null>(null);
+  const isPeekRef = useRef(false);
 
   const currentWord = roundWords[roundIndex] ?? null;
   const progress = roundWords.length ? roundIndex / roundWords.length : 0;
@@ -181,8 +183,28 @@ export default function SpellingPracticePage() {
 
   useEffect(() => {
     if (phase !== "draw") return;
+    const wasPeek = isPeekRef.current;
+    isPeekRef.current = false;
     setupCanvas();
-    clearCanvas();
+    if (wasPeek && canvasSnapshotRef.current) {
+      // Restore canvas content after peek (canvas was unmounted during "show" phase)
+      const snapshot = canvasSnapshotRef.current;
+      canvasSnapshotRef.current = null;
+      const img = new window.Image();
+      img.onload = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        const dpr = window.devicePixelRatio || 1;
+        const w = canvas.width / dpr;
+        const h = canvas.height / dpr;
+        ctx.drawImage(img, 0, 0, w, h);
+      };
+      img.src = snapshot;
+    } else {
+      clearCanvas();
+    }
     const onResize = () => setupCanvas();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
@@ -424,6 +446,10 @@ export default function SpellingPracticePage() {
                   </button>
                   <button
                     onClick={() => {
+                      if (canvasRef.current) {
+                        canvasSnapshotRef.current = canvasRef.current.toDataURL();
+                      }
+                      isPeekRef.current = true;
                       setPhase("show");
                       setShowStartTime(Date.now());
                     }}
