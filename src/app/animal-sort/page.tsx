@@ -1,8 +1,8 @@
 "use client";
 
 import confetti from "canvas-confetti";
-import { Caveat, Dancing_Script } from "next/font/google";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { KidsNav, useKidsFont, getFontClass } from "@/components/ui/kids-nav";
 
 type SortItem = {
   id: string;
@@ -17,7 +17,6 @@ type CategoryConfig = {
   items: SortItem[];
 };
 
-type BucketFontStyle = "print" | "handwriting" | "cursive";
 type BucketLetterCase = "upper" | "lower";
 
 type DragState = {
@@ -28,9 +27,6 @@ type DragState = {
   offsetY: number;
   pointerId: number;
 };
-
-const caveat = Caveat({ subsets: ["latin"], weight: ["700"] });
-const dancingScript = Dancing_Script({ subsets: ["latin"], weight: ["700"] });
 
 const CATEGORIES: Record<CategoryId, CategoryConfig> = {
   animals: {
@@ -97,7 +93,6 @@ const CATEGORIES: Record<CategoryId, CategoryConfig> = {
 };
 
 const STORAGE_KEYS = {
-  fontStyle: "animal-sort-font-style",
   letterCase: "animal-sort-letter-case",
   category: "animal-sort-category",
 };
@@ -178,7 +173,7 @@ function introText(categoryLabel: string) {
 export default function AnimalSortPage() {
   const [categoryId, setCategoryId] = useState<CategoryId>("animals");
   const [showSettings, setShowSettings] = useState(false);
-  const [bucketFontStyle, setBucketFontStyle] = useState<BucketFontStyle>("print");
+  const { fontStyle: bucketFontStyle, setFontStyle: setBucketFontStyle } = useKidsFont();
   const [bucketLetterCase, setBucketLetterCase] = useState<BucketLetterCase>("lower");
 
   const [roundItems, setRoundItems] = useState<SortItem[]>([]);
@@ -197,13 +192,8 @@ export default function AnimalSortPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const savedStyle = window.localStorage.getItem(STORAGE_KEYS.fontStyle);
     const savedCase = window.localStorage.getItem(STORAGE_KEYS.letterCase);
     const savedCategory = window.localStorage.getItem(STORAGE_KEYS.category);
-
-    if (savedStyle === "print" || savedStyle === "handwriting" || savedStyle === "cursive") {
-      setBucketFontStyle(savedStyle);
-    }
 
     if (savedCase === "upper" || savedCase === "lower") {
       setBucketLetterCase(savedCase);
@@ -213,11 +203,6 @@ export default function AnimalSortPage() {
       setCategoryId(savedCategory as CategoryId);
     }
   }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(STORAGE_KEYS.fontStyle, bucketFontStyle);
-  }, [bucketFontStyle]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -382,15 +367,14 @@ export default function AnimalSortPage() {
   }, [activeCategory.label, drillLetter, drillRemaining.length]);
 
   const bucketLetterClass =
-    bucketFontStyle === "cursive"
-      ? `${dancingScript.className} text-3xl font-bold tracking-wide text-slate-800`
-      : bucketFontStyle === "handwriting"
-        ? `${caveat.className} text-3xl font-bold tracking-wide text-slate-800`
-        : "text-2xl font-black text-slate-800";
+    bucketFontStyle === "print"
+      ? "text-2xl font-black text-slate-800"
+      : `${getFontClass(bucketFontStyle)} text-3xl font-bold text-slate-800`;
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-amber-100 via-sky-100 to-indigo-100 p-4 pb-8">
-      <div className="mx-auto max-w-4xl space-y-4">
+    <main className="min-h-screen bg-gradient-to-b from-amber-100 via-sky-100 to-indigo-100 pb-8">
+      <KidsNav />
+      <div className="mx-auto max-w-4xl space-y-4 px-4">
         <header className="rounded-3xl bg-white/85 p-4 shadow-lg">
           <div className="flex items-center justify-between gap-3">
             <div>
@@ -423,7 +407,7 @@ export default function AnimalSortPage() {
 
           {showSettings && (
             <div className="mt-4 rounded-2xl bg-slate-100 p-3">
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <label className="flex flex-col gap-1 text-sm font-semibold text-slate-700">
                   Category
                   <select
@@ -436,19 +420,6 @@ export default function AnimalSortPage() {
                         {CATEGORIES[id].label} ({CATEGORIES[id].items.length})
                       </option>
                     ))}
-                  </select>
-                </label>
-
-                <label className="flex flex-col gap-1 text-sm font-semibold text-slate-700">
-                  Bucket font
-                  <select
-                    value={bucketFontStyle}
-                    onChange={(event) => setBucketFontStyle(event.target.value as BucketFontStyle)}
-                    className="rounded-xl border border-slate-300 bg-white px-2 py-2"
-                  >
-                    <option value="print">Print</option>
-                    <option value="handwriting">Handwriting</option>
-                    <option value="cursive">Cursive</option>
                   </select>
                 </label>
 

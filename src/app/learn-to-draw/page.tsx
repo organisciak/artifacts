@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { lessons, getDrawingStorageKey } from "@/data/learn-to-draw";
+import { KidsNav } from "@/components/ui/kids-nav";
 
 type SavedDrawings = Record<string, string>;
 
@@ -25,6 +26,7 @@ export default function LearnToDrawGalleryPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-cyan-200 via-sky-200 to-blue-300 p-4 sm:p-6">
+      <KidsNav />
       <div className="mx-auto max-w-6xl space-y-6">
         <header className="rounded-3xl bg-white/85 p-6 shadow-lg text-center">
           <h1 className="text-4xl sm:text-5xl font-black text-blue-700">Learn to Draw ✏️</h1>

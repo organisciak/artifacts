@@ -8,6 +8,7 @@ import {
   shuffleArray,
 } from "@/data/sight-words";
 import confetti from "canvas-confetti";
+import { KidsNav, useKidsFont } from "@/components/ui/kids-nav";
 
 type GameState = "menu" | "playing" | "celebration";
 
@@ -62,6 +63,7 @@ function speakWord(word: string) {
 }
 
 export default function SightWordsPage() {
+  const { fontClass } = useKidsFont();
   const [gameState, setGameState] = useState<GameState>("menu");
   const [score, setScore] = useState(0);
   const [targetScore, setTargetScore] = useState(5);
@@ -192,7 +194,9 @@ export default function SightWordsPage() {
   // Menu screen
   if (gameState === "menu") {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-sky-300 to-sky-500 flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-b from-sky-300 to-sky-500 flex flex-col items-center p-4">
+        <KidsNav />
+        <div className="flex-1 flex flex-col items-center justify-center w-full">
         <h1 className="text-5xl font-bold text-white mb-8 drop-shadow-lg">
           🌟 Sight Words 🌟
         </h1>
@@ -286,6 +290,7 @@ export default function SightWordsPage() {
             🎮 Start Game!
           </button>
         </div>
+        </div>
       </div>
     );
   }
@@ -293,7 +298,9 @@ export default function SightWordsPage() {
   // Celebration screen
   if (gameState === "celebration") {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-yellow-300 via-pink-300 to-purple-400 flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-b from-yellow-300 via-pink-300 to-purple-400 flex flex-col items-center p-4">
+        <KidsNav />
+        <div className="flex-1 flex flex-col items-center justify-center">
         <div className="text-center animate-bounce">
           <div className="text-8xl mb-4">🎉</div>
           <h1 className="text-5xl font-bold text-white mb-4 drop-shadow-lg">
@@ -322,6 +329,7 @@ export default function SightWordsPage() {
             ⚙️ Settings
           </button>
         </div>
+        </div>
       </div>
     );
   }
@@ -329,6 +337,7 @@ export default function SightWordsPage() {
   // Playing screen
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-300 to-sky-500 flex flex-col p-4">
+      <KidsNav />
       {/* Score header */}
       <div className="flex justify-between items-center mb-4">
         <button
@@ -364,7 +373,7 @@ export default function SightWordsPage() {
               Which word is this?
             </p>
             {diffConfig.showWordHint && (
-              <p className="text-5xl font-bold text-white mb-4 drop-shadow-lg tracking-wide">
+              <p className={`text-5xl font-bold text-white mb-4 drop-shadow-lg tracking-wide ${fontClass}`}>
                 {currentRound.targetWord.word}
               </p>
             )}
@@ -420,7 +429,7 @@ export default function SightWordsPage() {
                   key={index}
                   onClick={() => handleChoice(index)}
                   disabled={feedback !== null}
-                  className={`py-6 px-4 rounded-2xl text-3xl font-bold shadow-lg transition-all ${buttonClass} ${pulseClass}`}
+                  className={`py-6 px-4 rounded-2xl text-3xl font-bold shadow-lg transition-all ${buttonClass} ${pulseClass} ${fontClass}`}
                 >
                   <span className="text-xs opacity-50 block mb-1">{index + 1}</span>
                   {option}

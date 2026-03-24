@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 import { allWords, getConfusables, shuffleArray, WordEntry } from "@/data/sight-words";
+import { KidsNav, useKidsFont } from "@/components/ui/kids-nav";
 
 type Phase = "menu" | "show" | "draw" | "check" | "result" | "win";
 
@@ -84,6 +85,7 @@ function getLetterChoices(word: string, confusables: string[]) {
 }
 
 export default function SpellingPracticePage() {
+  const { fontClass } = useKidsFont();
   const [phase, setPhase] = useState<Phase>("menu");
   const [audioOn, setAudioOn] = useState(true);
   const [roundWords, setRoundWords] = useState<WordEntry[]>([]);
@@ -317,7 +319,9 @@ export default function SpellingPracticePage() {
 
   if (phase === "menu") {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-cyan-300 via-sky-400 to-blue-500 p-4 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-cyan-300 via-sky-400 to-blue-500 p-4 flex flex-col items-center">
+        <KidsNav />
+        <div className="flex-1 flex items-center justify-center w-full">
         <div className="w-full max-w-md rounded-3xl bg-white/95 shadow-2xl p-6 text-center space-y-5">
           <h1 className="text-4xl font-black text-blue-700">✍️ Spelling Practice</h1>
           <p className="text-gray-700 text-lg">
@@ -341,6 +345,7 @@ export default function SpellingPracticePage() {
             Start ✨
           </button>
         </div>
+        </div>
       </div>
     );
   }
@@ -353,6 +358,7 @@ export default function SpellingPracticePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-200 via-blue-300 to-indigo-400 p-3 sm:p-5">
+      <KidsNav />
       <div className="max-w-3xl mx-auto">
         <div className="bg-white/90 rounded-2xl p-3 sm:p-4 shadow mb-3">
           <div className="flex items-center justify-between">
@@ -386,7 +392,7 @@ export default function SpellingPracticePage() {
             />
             <p className="text-gray-600 text-sm sm:text-base">Write this word from memory</p>
             <p
-              className="text-5xl sm:text-6xl font-black text-blue-700 transition-opacity duration-1000"
+              className={`text-5xl sm:text-6xl font-black text-blue-700 transition-opacity duration-1000 ${fontClass}`}
               style={{ opacity: phase === "show" ? revealOpacity : 0 }}
             >
               {currentWord.word}
@@ -446,7 +452,7 @@ export default function SpellingPracticePage() {
                 {Array.from({ length: currentWord.word.length }).map((_, i) => (
                   <div
                     key={i}
-                    className="h-12 w-12 rounded-xl bg-blue-50 border-2 border-blue-200 text-2xl font-bold text-blue-700 flex items-center justify-center"
+                    className={`h-12 w-12 rounded-xl bg-blue-50 border-2 border-blue-200 text-2xl font-bold text-blue-700 flex items-center justify-center ${fontClass}`}
                   >
                     {typedAnswer[i] ?? "_"}
                   </div>
@@ -458,7 +464,7 @@ export default function SpellingPracticePage() {
                   <button
                     key={`${letter}-${i}`}
                     onClick={() => pushLetter(letter)}
-                    className="rounded-xl bg-blue-100 py-3 text-xl font-black text-blue-800 active:scale-95"
+                    className={`rounded-xl bg-blue-100 py-3 text-xl font-black text-blue-800 active:scale-95 ${fontClass}`}
                   >
                     {letter}
                   </button>

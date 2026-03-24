@@ -9,6 +9,7 @@ import {
   getLessonById,
   HAND_PREFERENCE_KEY,
 } from "@/data/learn-to-draw";
+import { KidsNav } from "@/components/ui/kids-nav";
 
 type HandPreference = "left" | "right";
 
@@ -252,6 +253,7 @@ export default function LearnToDrawLessonPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-100 via-cyan-100 to-teal-100 p-3 sm:p-5">
+      <KidsNav />
       <div className="mx-auto max-w-7xl space-y-4">
         <header className="rounded-3xl bg-white/90 shadow p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
