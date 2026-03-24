@@ -111,6 +111,11 @@ function playSound(kind: "correct" | "wrong" | "win") {
     audioCtx = new AudioContext();
   }
 
+  // iOS/iPadOS requires resuming AudioContext from a user gesture
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
+
   const ctx = audioCtx;
   const now = ctx.currentTime;
 
@@ -622,8 +627,8 @@ export default function AnimalSortPage() {
         <div
           className="pointer-events-none fixed z-50 rounded-2xl border-2 border-violet-300 bg-white px-4 py-3 text-center shadow-2xl"
           style={{
-            left: dragging.x - dragging.offsetX,
-            top: dragging.y - dragging.offsetY,
+            left: dragging.x - dragging.offsetX - 60,
+            top: dragging.y - dragging.offsetY - 60,
             width: 120,
           }}
         >

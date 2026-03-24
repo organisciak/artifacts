@@ -11,6 +11,18 @@ import confetti from "canvas-confetti";
 
 type GameState = "menu" | "playing" | "celebration";
 
+type DifficultyLevel = "easy" | "medium" | "hard" | "expert";
+
+const DIFFICULTY_CONFIG: Record<
+  DifficultyLevel,
+  { label: string; description: string; optionCount: number; showWordHint: boolean }
+> = {
+  easy: { label: "Easy", description: "2 choices, word shown", optionCount: 2, showWordHint: true },
+  medium: { label: "Medium", description: "3 choices", optionCount: 3, showWordHint: false },
+  hard: { label: "Hard", description: "4 choices", optionCount: 4, showWordHint: false },
+  expert: { label: "Expert", description: "4 choices, all mixed", optionCount: 4, showWordHint: false },
+};
+
 function playSound(type: "correct" | "wrong") {
   const ctx = new AudioContext();
   const osc = ctx.createOscillator();
@@ -40,11 +52,20 @@ function playSound(type: "correct" | "wrong") {
   }
 }
 
+function speakWord(word: string) {
+  if (typeof window === "undefined" || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(word);
+  utterance.rate = 0.8;
+  utterance.pitch = 1.1;
+  window.speechSynthesis.speak(utterance);
+}
+
 export default function SightWordsPage() {
   const [gameState, setGameState] = useState<GameState>("menu");
   const [score, setScore] = useState(0);
   const [targetScore, setTargetScore] = useState(5);
-  const [optionCount, setOptionCount] = useState(3);
+  const [difficulty, setDifficulty] = useState<DifficultyLevel>("medium");
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(
     undefined
   );
@@ -52,19 +73,23 @@ export default function SightWordsPage() {
   const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
+  const diffConfig = DIFFICULTY_CONFIG[difficulty];
+  // Expert mode forces all categories mixed
+  const effectiveCategory = difficulty === "expert" ? undefined : selectedCategory;
+
   const startGame = useCallback(() => {
     setScore(0);
     setGameState("playing");
-    setCurrentRound(generateRound(optionCount, selectedCategory));
+    setCurrentRound(generateRound(diffConfig.optionCount, effectiveCategory));
     setFeedback(null);
     setSelectedIndex(null);
-  }, [optionCount, selectedCategory]);
+  }, [diffConfig.optionCount, effectiveCategory]);
 
   const nextRound = useCallback(() => {
-    setCurrentRound(generateRound(optionCount, selectedCategory));
+    setCurrentRound(generateRound(diffConfig.optionCount, effectiveCategory));
     setFeedback(null);
     setSelectedIndex(null);
-  }, [optionCount, selectedCategory]);
+  }, [diffConfig.optionCount, effectiveCategory]);
 
   const handleChoice = useCallback(
     (index: number) => {
@@ -192,25 +217,29 @@ export default function SightWordsPage() {
             </div>
           </div>
 
-          {/* Option count */}
+          {/* Difficulty */}
           <div>
             <label className="block text-lg font-semibold text-gray-700 mb-2">
-              Choices per round: {optionCount}
+              Difficulty
             </label>
-            <div className="flex gap-2">
-              {[2, 3, 4].map((n) => (
-                <button
-                  key={n}
-                  onClick={() => setOptionCount(n)}
-                  className={`flex-1 py-3 rounded-xl text-lg font-bold transition-all ${
-                    optionCount === n
-                      ? "bg-blue-500 text-white scale-105 shadow-md"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
-                >
-                  {n}
-                </button>
-              ))}
+            <div className="grid grid-cols-2 gap-2">
+              {(Object.keys(DIFFICULTY_CONFIG) as DifficultyLevel[]).map((level) => {
+                const cfg = DIFFICULTY_CONFIG[level];
+                return (
+                  <button
+                    key={level}
+                    onClick={() => setDifficulty(level)}
+                    className={`py-3 px-4 rounded-xl text-sm font-bold transition-all ${
+                      difficulty === level
+                        ? "bg-blue-500 text-white scale-105 shadow-md"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
+                  >
+                    <div>{cfg.label}</div>
+                    <div className={`text-xs font-normal mt-0.5 ${difficulty === level ? "text-blue-100" : "text-gray-500"}`}>{cfg.description}</div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -334,10 +363,20 @@ export default function SightWordsPage() {
             <p className="text-white text-lg mb-2 drop-shadow">
               Which word is this?
             </p>
-            <p className="text-5xl font-bold text-white mb-4 drop-shadow-lg tracking-wide">
-              {currentRound.targetWord.word}
-            </p>
-            <WordImage word={currentRound.targetWord.word} size="large" />
+            {diffConfig.showWordHint && (
+              <p className="text-5xl font-bold text-white mb-4 drop-shadow-lg tracking-wide">
+                {currentRound.targetWord.word}
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={() => speakWord(currentRound.targetWord.word)}
+              className="focus:outline-none active:scale-95 transition-transform"
+              aria-label={`Hear the word`}
+            >
+              <WordImage word={currentRound.targetWord.word} size="large" />
+            </button>
+            <p className="text-white/70 text-sm mt-2 drop-shadow">Tap picture to hear the word</p>
           </div>
 
           {/* Options */}
