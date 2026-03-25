@@ -63,6 +63,13 @@ export const lessons: LearnToDrawLesson[] = [
     preview: "/learn-to-draw/hedgehog/step4.png",
     stepImage: (step: number) => `/learn-to-draw/hedgehog/step${step}.png`,
   },
+  {
+    id: "beaver",
+    name: "Beaver",
+    steps: 4,
+    preview: "/learn-to-draw/beaver/step4.png",
+    stepImage: (step: number) => `/learn-to-draw/beaver/step${step}.png`,
+  },
 ];
 
 export const HAND_PREFERENCE_KEY = "learn-to-draw:hand";
