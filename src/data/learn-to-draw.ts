@@ -70,6 +70,13 @@ export const lessons: LearnToDrawLesson[] = [
     preview: "/learn-to-draw/beaver/step4.png",
     stepImage: (step: number) => `/learn-to-draw/beaver/step${step}.png`,
   },
+  {
+    id: "pegasus",
+    name: "Pegasus",
+    steps: 4,
+    preview: "/learn-to-draw/pegasus/step4.png",
+    stepImage: (step: number) => `/learn-to-draw/pegasus/step${step}.png`,
+  },
 ];
 
 export const HAND_PREFERENCE_KEY = "learn-to-draw:hand";
