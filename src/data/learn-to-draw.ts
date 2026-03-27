@@ -77,6 +77,13 @@ export const lessons: LearnToDrawLesson[] = [
     preview: "/learn-to-draw/pegasus/step4.png",
     stepImage: (step: number) => `/learn-to-draw/pegasus/step${step}.png`,
   },
+  {
+    id: "basilisk",
+    name: "Basilisk",
+    steps: 4,
+    preview: "/learn-to-draw/basilisk/step4.png",
+    stepImage: (step: number) => `/learn-to-draw/basilisk/step${step}.png`,
+  },
 ];
 
 export const HAND_PREFERENCE_KEY = "learn-to-draw:hand";
