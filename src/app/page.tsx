@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Toy, toys } from '@/lib/toys';
 import { ToyCard } from '@/components/ui/toy-card';
-import { Footer } from '@/components/ui/footer';
 
 export default function Home() {
   const [showInProgress, setShowInProgress] = useState(false);
@@ -93,7 +92,6 @@ export default function Home() {
         </label>
       )}
 
-      <Footer />
     </main>
   );
 }
