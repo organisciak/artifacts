@@ -41,6 +41,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/seedrandom": "^3.0.8",
+    "beads": "github:steveyegge/beads",
     "eslint": "^9",
     "eslint-config-next": "15.1.12",
     "postcss": "^8",

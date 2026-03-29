@@ -99,6 +99,9 @@ importers:
       '@types/seedrandom':
         specifier: ^3.0.8
         version: 3.0.8
+      beads:
+        specifier: github:steveyegge/beads
+        version: github:steveyegge/beads
       eslint:
         specifier: ^9
         version: 9.19.0(jiti@1.21.7)
@@ -120,6 +123,10 @@ packages:
   '@alloc/quick-lru@5.2.0':
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
     engines: {node: '>=10'}
+
+  'beads@github:steveyegge/beads':
+    resolution: {tarball: https://codeload.github.com/steveyegge/beads/tar.gz/HEAD}
+    version: 0.0.0
 
   '@babel/runtime@7.26.7':
     resolution: {integrity: sha512-AOPI3D+a8dXnja+iwsUqGRjr1BbZIe771sXdapOtYI531gSqpi92vXivKcq2asu/DFpdl1ceFAKZyRzK2PCVcQ==}
